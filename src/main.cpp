@@ -138,9 +138,10 @@ int main( int argc, char** argv )
     file = fl.getNextFile();
     count++;
   }
-  cout << "files processed is " << count << endl;
   
   tp.JoinAll();
+  cout << "files processed is " << count << endl;
+
   sqlite3_exec(db,"END TRANSACTION",0,0,0);
 
   sqlite3_exec(db,"BEGIN TRANSACTION",0,0,0);
@@ -162,27 +163,42 @@ int main( int argc, char** argv )
     Identifier cur = mainlst.front();
 
     auto fId = used.find(cur);
+    
+    int id_pk;
+    const char* id_name;
+    
+    int loc_id;
+    int loc_file;
+    int loc_line;
+    
+    
     if( fId == used.end() ) {
-      sqlite3_bind_int(idStmt,1,++i);
-      sqlite3_bind_text(idStmt,2,cur.word.c_str(),-1,SQLITE_STATIC);
-      sqlite3_step(idStmt);
-      sqlite3_clear_bindings(idStmt);
-      sqlite3_reset(idStmt);
-
-      sqlite3_bind_int(locStmt,2,i);
-      sqlite3_bind_int(locStmt,3,cur.file_key);
+      id_pk = ++i;
+      id_name = cur.word.c_str();
+      loc_id = i;
+      loc_file = cur.file_key;
 
       cur.file_key = i;
       used.insert(std::move(cur));
     } else {
-      sqlite3_bind_int(locStmt,2,fId->file_key);
-      sqlite3_bind_int(locStmt,3,cur.file_key);
+      loc_id = fId->file_key;
+      loc_file = cur.file_key;
     }
+    loc_line = cur.line_num;
 
-    sqlite3_bind_int(locStmt,4,cur.line_num);
+    sqlite3_bind_int(idStmt,1,id_pk);
+    sqlite3_bind_text(idStmt,2,id_name,-1,SQLITE_STATIC);
+    sqlite3_step(idStmt);
+    sqlite3_clear_bindings(idStmt);
+    sqlite3_reset(idStmt);
+
+    sqlite3_bind_int(locStmt,2,loc_id);
+    sqlite3_bind_int(locStmt,3,loc_file);
+    sqlite3_bind_int(locStmt,4,loc_line);
     sqlite3_step(locStmt);
     sqlite3_clear_bindings(locStmt);
     sqlite3_reset(locStmt);
+
     mainlst.pop_front();
 
   }

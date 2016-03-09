@@ -8,7 +8,7 @@ INCS=$(addprefix -I,$(INC))
 ifdef DBG
   OPT_OR_DBG=-g
 else
-  OPT_OR_DBG=-O2
+  OPT_OR_DBG=-s
 endif
 
 C_C=$(CC) -Wall -x c++ $(gDEFs) $(INCS)

@@ -10,11 +10,13 @@
 #include <functional>
 #include <condition_variable>
 
+#include <iostream>
+
 namespace concurrent {
 
 /**
  *  Simple ThreadPool that creates `threadCount` threads upon its creation,
- *  and pulls from a queue to get new jobs. The default is 10 threads.
+ *  and pulls from a queue to get new jobs.
  *
  *  This class requires a number of c++11 features be present in your compiler.
  */
@@ -74,10 +76,13 @@ public:
     {
         threadCount = count;
         threads.reserve(threadCount);
-        for( unsigned int i = 0; i < threadCount; ++i )
+        for( unsigned int i = 0; i < threadCount; ++i ) {
             threads.push_back( std::move(std::thread([this,i]{
               this->Task();
             })) );
+            
+            threads[i].detach();
+        }
     }
 
     /**
