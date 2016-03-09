@@ -1,11 +1,15 @@
-CPP=g++
 CC=gcc
+CPP=$(CC)
 
 SRC=src
 INC=inc $(SRC)
 INCS=$(addprefix -I,$(INC))
 
-OPT_OR_DBG=-g
+ifdef DBG
+  OPT_OR_DBG=-g
+else
+  OPT_OR_DBG=-O2
+endif
 
 C_C=$(CC) -Wall -x c++ $(gDEFs) $(INCS)
 C_CPP=$(CC) -Wall -std=c++11 -x c++ $(gDEFs) $(INCS)
@@ -39,7 +43,7 @@ $(APP): $(BLD) $(EXE)
 	-cp $(BLD)/$(EXE) $(APP)
 
 $(EXE): $(BLD_OBJS)
-	$(CPP) -o $(BLD)/$(EXE) $^ -lpthread -lsqlite3
+	$(CPP) -o $(BLD)/$(EXE) $^ -lpthread -lsqlite3 -lstdc++
 
 $(BLD):
 	-mkdir $(BLD)

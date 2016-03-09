@@ -3,7 +3,6 @@
 #include <unordered_set>
 #include <functional>
 
-//#define DATABASE ":memory:"
 #define DATABASE "test.db"
 #include <sqlite3.h>
 
@@ -40,10 +39,6 @@ public:
 sqlite3_stmt *idStmt;
 sqlite3_stmt *locStmt;
 
-static int callback(void *NotUsed, int argc, char **argv, char **azColName){
-  return 0;
-}
-
 int main( int argc, char** argv )
 {
   int threadAmt = 256;
@@ -66,7 +61,7 @@ int main( int argc, char** argv )
   }
   sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
 
-  char* sql = "DROP TABLE Files;";
+  char const *sql = "DROP TABLE Files;";
   if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
     cerr << "drop tables" << endl;
   }
@@ -130,24 +125,21 @@ int main( int argc, char** argv )
   sqlite3_exec(db,"BEGIN TRANSACTION",0,0,0);
 
   ids.clear();
-  tp.AddJob(
-    []() {
-      string file = fl.getNextFile();
-      int count = 1;
-      while( file.length() > 0 ) {
-        tp.AddJob(
-          [file]() {
-            FileProcessor fp;
-            fp.setFile( file );
-            fp.run();
-          }
-        );
-        file = fl.getNextFile();
-        count++;
+  string file = fl.getNextFile();
+  int count = 1;
+  while( file.length() > 0 ) {
+    tp.AddJob(
+      [file]() {
+        FileProcessor fp;
+        fp.setFile( file );
+        fp.run();
       }
-    cout << "files processed is " << count << endl;
-    }
-  );
+    );
+    file = fl.getNextFile();
+    count++;
+  }
+  cout << "files processed is " << count << endl;
+  
   tp.JoinAll();
   sqlite3_exec(db,"END TRANSACTION",0,0,0);
 
