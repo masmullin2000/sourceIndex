@@ -60,6 +60,8 @@ int main( int argc, char** argv )
     return 1;
   }
   sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+  sqlite3_exec(db, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+  
 
   char const *sql = "DROP TABLE Files;";
   if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
@@ -71,7 +73,7 @@ int main( int argc, char** argv )
         "name   TEXT            NOT NULL);";
 
   if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
-    cerr << "create teable" << endl;
+    cerr << "create table" << endl;
     return 1;
   }
 
@@ -159,7 +161,7 @@ int main( int argc, char** argv )
     count++;
   }
   
-  tp.JoinAll();
+  tp.WaitAll();
   cout << "files processed is " << count << endl;
 
   sqlite3_exec(db,"END TRANSACTION",0,0,0);
@@ -180,20 +182,28 @@ int main( int argc, char** argv )
   used.clear();
   
   struct locs {
-  int id;
-  int file;
-  int line;
+  uint32_t id;
+  uint32_t file;
+  uint16_t line;
   locs(int i, int f, int l) {
     id = i;
     file = f;
     line = l;
   }
+  bool operator<( const locs& rhs ) const {
+    if( id < rhs.id ) return true;
+    if( file < rhs.file ) return true;
+    if( line < rhs.line ) return true;
+    else return false;
+  }
   };
   
   list<locs> loc_list;
-
+  
   while( !mainlst.empty() ) {
     Identifier cur = mainlst.front();
+    mainlst.pop_front();
+
 
     auto fId = used.find(cur);
     
@@ -201,15 +211,14 @@ int main( int argc, char** argv )
     const char* id_name;
     
     int loc_id;
-    int loc_file;
-    int loc_line;
-    
+    int loc_file = cur.file_key;
+    int loc_line = cur.line_num;
     
     if( fId == used.end() ) {
       id_pk = ++i;
       id_name = cur.word.c_str();
       loc_id = i;
-      loc_file = cur.file_key;
+
 #ifdef SIZE
       sqlite3_bind_int(idStmt,1,id_pk);
       sqlite3_bind_text(idStmt,2,id_name,-1,SQLITE_STATIC);
@@ -221,9 +230,8 @@ int main( int argc, char** argv )
       used.insert(std::move(cur));
     } else {
       loc_id = fId->file_key;
-      loc_file = cur.file_key;
     }
-    loc_line = cur.line_num;
+    
 #ifdef SIZE
     //sqlite3_bind_int(locStmt,2,loc_id);
     locs lkj(loc_id,loc_file,loc_line);
@@ -237,9 +245,9 @@ int main( int argc, char** argv )
     sqlite3_clear_bindings(locStmt);
     sqlite3_reset(locStmt);
 #endif
-    mainlst.pop_front();
-
   }
+  cout << "finished with ids" << endl;
+  used.clear();
 #ifdef SIZE
   for( locs l: loc_list ) {
     sqlite3_bind_int(locStmt,2,l.id);
@@ -248,9 +256,9 @@ int main( int argc, char** argv )
     sqlite3_step(locStmt);
     sqlite3_clear_bindings(locStmt);
     sqlite3_reset(locStmt);
-    ;//cout << l.id << endl;
   }
 #endif
+  tp.JoinAll();
   sqlite3_exec(db,"END TRANSACTION",0,0,0);
 
   return 0;

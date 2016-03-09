@@ -8,7 +8,7 @@ INCS=$(addprefix -I,$(INC))
 ifdef DBG
   OPT_OR_DBG=-g
 else
-  OPT_OR_DBG=-s
+  OPT_OR_DBG=-O0
 endif
 
 ifdef SZ

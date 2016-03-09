@@ -16,7 +16,7 @@ class Identifier
 {
 public:
   string    word;
-  uint16_t  file_key;
+  uint32_t  file_key;
   uint16_t  line_num;
 
   Identifier
