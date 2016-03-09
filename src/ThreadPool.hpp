@@ -80,8 +80,6 @@ public:
             threads.push_back( std::move(std::thread([this,i]{
               this->Task();
             })) );
-            
-            threads[i].detach();
         }
     }
 

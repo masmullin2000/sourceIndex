@@ -80,6 +80,7 @@ int main( int argc, char** argv )
     cerr << "drop tables" << endl;
   }
 
+#ifdef SIZE
   sql = "CREATE TABLE Identifiers("
         "pk       INTEGER PRIMARY KEY,"
         "name     TEXT    UNIQUE  NOT NULL);";
@@ -88,6 +89,7 @@ int main( int argc, char** argv )
     cerr << "create table" << endl;
     return 1;
   }
+#endif
 
   sql = "DROP TABLE Locations;";
   if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
@@ -96,7 +98,11 @@ int main( int argc, char** argv )
 
   sql = "CREATE TABLE Locations("
         "pk       INTEGER PRIMARY KEY,"
+#ifdef SIZE
         "fk_id    INT             NOT NULL,"
+#else
+        "name     TEXT            NOT NULL,"
+#endif
         "fk_file  INT             NOT NULL,"
         "line     INT             NOT NULL);";
 
@@ -110,12 +116,19 @@ int main( int argc, char** argv )
     cerr << "prepare problem" << endl;
     return 1;
   }
-
+#ifdef SIZE
   if( SQLITE_OK != sqlite3_prepare_v2(db,"INSERT INTO Locations (pk,fk_id,fk_file,line)"
                                          "VALUES (?,?,?,?);",256,&locStmt,0) ) {
     cerr << "prepare problem" << endl;
     return 1;
   }
+#else
+  if( SQLITE_OK != sqlite3_prepare_v2(db,"INSERT INTO Locations (pk,name,fk_file,line)"
+                                         "VALUES (?,?,?,?);",256,&locStmt,0) ) {
+    cerr << "prepare problem" << endl;
+    return 1;
+  }
+#endif
 
   static FileList fl;
   fl.setFile( argv[1] );
@@ -126,6 +139,11 @@ int main( int argc, char** argv )
 
   ids.clear();
   string file = fl.getNextFile();
+  if( file.length() == 0 ) {
+    cerr << "File: " << argv[1] << " does not exist" << endl;
+    return 1;
+  }
+  cout << "Start Reading Files" << endl;
   int count = 1;
   while( file.length() > 0 ) {
     tp.AddJob(
@@ -185,7 +203,7 @@ int main( int argc, char** argv )
       loc_file = cur.file_key;
     }
     loc_line = cur.line_num;
-
+#ifdef SIZE
     sqlite3_bind_int(idStmt,1,id_pk);
     sqlite3_bind_text(idStmt,2,id_name,-1,SQLITE_STATIC);
     sqlite3_step(idStmt);
@@ -193,6 +211,9 @@ int main( int argc, char** argv )
     sqlite3_reset(idStmt);
 
     sqlite3_bind_int(locStmt,2,loc_id);
+#else
+    sqlite3_bind_text(locStmt,2,id_name,-1,SQLITE_STATIC);
+#endif
     sqlite3_bind_int(locStmt,3,loc_file);
     sqlite3_bind_int(locStmt,4,loc_line);
     sqlite3_step(locStmt);

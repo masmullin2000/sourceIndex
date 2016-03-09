@@ -11,6 +11,10 @@ else
   OPT_OR_DBG=-s
 endif
 
+ifdef SZ
+  OPT_OR_DBG+=-DSIZE
+endif
+
 C_C=$(CC) -Wall -x c++ $(gDEFs) $(INCS)
 C_CPP=$(CC) -Wall -std=c++11 -x c++ $(gDEFs) $(INCS)
 COMPILE=-c $< -o $@ $(OPT_OR_DBG)
@@ -36,6 +40,7 @@ test: all
 clean:
 	-rm -rf $(BLD)
 	-rm $(APP)
+	-rm test.db*
 
 all: $(APP)
 
