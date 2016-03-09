@@ -18,7 +18,7 @@ public:
   string    word;
   uint16_t  file_key;
   uint16_t  line_num;
-  
+
   Identifier
   (
     string  w,
@@ -30,13 +30,13 @@ public:
     file_key = file;
     line_num = line;
   }
-  
+
   const string
   str() const
   {
     stringstream ss;
     ss << word << ":" << file_key << ":" << line_num;
-    
+
     return ss.str();
   }
 };
@@ -59,12 +59,12 @@ public:
   (
     string fileName
   );
-  
+
   void setFile
   (
     string fileName
   );
-  
+
   FileProcessorErrors
   run();
 

@@ -8,17 +8,17 @@ class FileList
 {
 public:
   FileList();
-  
+
   FileList
   (
     char* fileName
   );
-  
+
   void setFile
   (
     char* fileName
   );
-  
+
   string
   getNextFile();
 private:

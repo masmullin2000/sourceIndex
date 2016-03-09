@@ -38,7 +38,7 @@ IsIdentifierNonDigit
     case UNDERSCORE:
       return true;
   }
-  
+
   return false;
 }
 

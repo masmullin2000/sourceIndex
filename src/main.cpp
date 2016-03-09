@@ -69,7 +69,6 @@ int main( int argc, char** argv )
   char* sql = "DROP TABLE Files;";
   if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
     cerr << "drop tables" << endl;
-    //return 1;
   }
 
   sql = "CREATE TABLE Files("
@@ -80,28 +79,26 @@ int main( int argc, char** argv )
     cerr << "create teable" << endl;
     return 1;
   }
-  
+
   sql = "DROP TABLE Identifiers;";
   if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
     cerr << "drop tables" << endl;
-    //return 1;
   }
-  
+
   sql = "CREATE TABLE Identifiers("
         "pk       INTEGER PRIMARY KEY,"
         "name     TEXT    UNIQUE  NOT NULL);";
 
   if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
-    cerr << "create teable" << endl;
+    cerr << "create table" << endl;
     return 1;
   }
 
   sql = "DROP TABLE Locations;";
   if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
     cerr << "drop tables" << endl;
-    //return 1;
   }
-  
+
   sql = "CREATE TABLE Locations("
         "pk       INTEGER PRIMARY KEY,"
         "fk_id    INT             NOT NULL,"
@@ -109,10 +106,10 @@ int main( int argc, char** argv )
         "line     INT             NOT NULL);";
 
   if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
-    cerr << "create teable" << endl;
+    cerr << "create table" << endl;
     return 1;
   }
-  
+
   if( SQLITE_OK != sqlite3_prepare_v2(db,"INSERT INTO Identifiers (pk,name)"
                                          "VALUES (?,?);",256,&idStmt,0) ) {
     cerr << "prepare problem" << endl;
@@ -129,7 +126,7 @@ int main( int argc, char** argv )
   fl.setFile( argv[1] );
 
   static ThreadPool tp(threadAmt);
-  
+
   sqlite3_exec(db,"BEGIN TRANSACTION",0,0,0);
 
   ids.clear();
@@ -158,45 +155,36 @@ int main( int argc, char** argv )
 
   string currStr;
   int i = -1;
-  
+
   auto it = ids.begin();
   list<Identifier> mainlst = *it;
 
   for( ; it != ids.end(); ++it ) {
     mainlst.splice(mainlst.begin(),*it);
   }
-  
-  //mainlst.sort();
-  
+
   unordered_set<Identifier,ID_HASH> used;
   used.clear();
-  
-int zzz = mainlst.size();
+
   while( !mainlst.empty() ) {
     Identifier cur = mainlst.front();
-    //cerr << zzz-- << ":";
-    //cout << cur.str() << endl;
+
     auto fId = used.find(cur);
     if( fId == used.end() ) {
-      //cerr << "not found" << endl;
-      
       sqlite3_bind_int(idStmt,1,++i);
       sqlite3_bind_text(idStmt,2,cur.word.c_str(),-1,SQLITE_STATIC);
       sqlite3_step(idStmt);
       sqlite3_clear_bindings(idStmt);
       sqlite3_reset(idStmt);
-      
+
       sqlite3_bind_int(locStmt,2,i);
       sqlite3_bind_int(locStmt,3,cur.file_key);
 
       cur.file_key = i;
       used.insert(std::move(cur));
     } else {
-      //cerr << "found" << endl;
-
       sqlite3_bind_int(locStmt,2,fId->file_key);
       sqlite3_bind_int(locStmt,3,cur.file_key);
-
     }
 
     sqlite3_bind_int(locStmt,4,cur.line_num);
@@ -204,31 +192,9 @@ int zzz = mainlst.size();
     sqlite3_clear_bindings(locStmt);
     sqlite3_reset(locStmt);
     mainlst.pop_front();
-    
-  }
-#if 0
-  for( Identifier w: ids ) {
-    string s = w.word;
 
-    if( s != currStr ) {
-      sqlite3_bind_int(idStmt,1,++i);
-      sqlite3_bind_text(idStmt,2,s.c_str(),-1,SQLITE_STATIC);
-      sqlite3_step(idStmt);
-      sqlite3_clear_bindings(idStmt);
-      sqlite3_reset(idStmt);
-      currStr = s;
-    }
-    
-    sqlite3_bind_int(locStmt,2,i);
-    sqlite3_bind_int(locStmt,3,w.file_key);
-    sqlite3_bind_int(locStmt,4,w.line_num);
-    sqlite3_step(locStmt);
-    sqlite3_clear_bindings(locStmt);
-    sqlite3_reset(locStmt);
   }
-#endif
   sqlite3_exec(db,"END TRANSACTION",0,0,0);
-
 
   return 0;
 }

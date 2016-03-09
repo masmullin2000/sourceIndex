@@ -29,8 +29,7 @@ FileList::getNextFile()
 {
   string str;
   getline(_fs, str);
-  
+
   return str;
 }
-  
-  
+

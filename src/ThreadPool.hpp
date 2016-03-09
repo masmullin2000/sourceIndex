@@ -44,7 +44,7 @@ class ThreadPool {
     }
 
     /**
-     *  Get the next job; pop the first item in the queue, 
+     *  Get the next job; pop the first item in the queue,
      *  otherwise wait for a signal from the main thread.
      */
     std::function<void(void)> next_job() {
@@ -53,7 +53,7 @@ class ThreadPool {
 
         // Wait for a job if we don't have any.
         job_available_var.wait( job_lock, [this]() ->bool { return queue.size() || bailout; } );
-        
+
         // Get job from the queue
         if( !bailout ) {
             res = queue.front();
@@ -116,7 +116,7 @@ public:
 
     /**
      *  Join with all threads. Block until all threads have completed.
-     *  Params: WaitForAll: If true, will wait for the queue to empty 
+     *  Params: WaitForAll: If true, will wait for the queue to empty
      *          before joining with threads. If false, will complete
      *          current jobs, then inform the threads to exit.
      *  The queue will be empty after this call, and the threads will
@@ -143,7 +143,7 @@ public:
     }
 
     /**
-     *  Wait for the pool to empty before continuing. 
+     *  Wait for the pool to empty before continuing.
      *  This does not call `std::thread::join`, it only waits until
      *  all jobs have finshed executing.
      */
