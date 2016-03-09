@@ -1,0 +1,4 @@
+./src/FileList.cpp
+./src/FileProcessor.cpp
+./src/utils.cpp
+./src/main.cpp
