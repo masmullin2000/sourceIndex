@@ -89,6 +89,12 @@ int main( int argc, char** argv )
     cerr << "create table" << endl;
     return 1;
   }
+  
+  if( SQLITE_OK != sqlite3_prepare_v2(db,"INSERT INTO Identifiers (pk,name)"
+                                         "VALUES (?,?);",256,&idStmt,0) ) {
+    cerr << "prepare problem" << endl;
+    return 1;
+  }
 #endif
 
   sql = "DROP TABLE Locations;";
@@ -111,21 +117,17 @@ int main( int argc, char** argv )
     return 1;
   }
 
-  if( SQLITE_OK != sqlite3_prepare_v2(db,"INSERT INTO Identifiers (pk,name)"
-                                         "VALUES (?,?);",256,&idStmt,0) ) {
-    cerr << "prepare problem" << endl;
-    return 1;
-  }
+
 #ifdef SIZE
   if( SQLITE_OK != sqlite3_prepare_v2(db,"INSERT INTO Locations (pk,fk_id,fk_file,line)"
                                          "VALUES (?,?,?,?);",256,&locStmt,0) ) {
-    cerr << "prepare problem" << endl;
+    cerr << "prepare problem loc size" << endl;
     return 1;
   }
 #else
   if( SQLITE_OK != sqlite3_prepare_v2(db,"INSERT INTO Locations (pk,name,fk_file,line)"
                                          "VALUES (?,?,?,?);",256,&locStmt,0) ) {
-    cerr << "prepare problem" << endl;
+    cerr << "prepare problem locations" << endl;
     return 1;
   }
 #endif
@@ -176,6 +178,19 @@ int main( int argc, char** argv )
 
   unordered_set<Identifier,ID_HASH> used;
   used.clear();
+  
+  struct locs {
+  int id;
+  int file;
+  int line;
+  locs(int i, int f, int l) {
+    id = i;
+    file = f;
+    line = l;
+  }
+  };
+  
+  list<locs> loc_list;
 
   while( !mainlst.empty() ) {
     Identifier cur = mainlst.front();
@@ -195,7 +210,13 @@ int main( int argc, char** argv )
       id_name = cur.word.c_str();
       loc_id = i;
       loc_file = cur.file_key;
-
+#ifdef SIZE
+      sqlite3_bind_int(idStmt,1,id_pk);
+      sqlite3_bind_text(idStmt,2,id_name,-1,SQLITE_STATIC);
+      sqlite3_step(idStmt);
+      sqlite3_clear_bindings(idStmt);
+      sqlite3_reset(idStmt);
+#endif
       cur.file_key = i;
       used.insert(std::move(cur));
     } else {
@@ -204,25 +225,32 @@ int main( int argc, char** argv )
     }
     loc_line = cur.line_num;
 #ifdef SIZE
-    sqlite3_bind_int(idStmt,1,id_pk);
-    sqlite3_bind_text(idStmt,2,id_name,-1,SQLITE_STATIC);
-    sqlite3_step(idStmt);
-    sqlite3_clear_bindings(idStmt);
-    sqlite3_reset(idStmt);
-
-    sqlite3_bind_int(locStmt,2,loc_id);
+    //sqlite3_bind_int(locStmt,2,loc_id);
+    locs lkj(loc_id,loc_file,loc_line);
+    loc_list.push_back(lkj);
 #else
     sqlite3_bind_text(locStmt,2,id_name,-1,SQLITE_STATIC);
-#endif
+
     sqlite3_bind_int(locStmt,3,loc_file);
     sqlite3_bind_int(locStmt,4,loc_line);
     sqlite3_step(locStmt);
     sqlite3_clear_bindings(locStmt);
     sqlite3_reset(locStmt);
-
+#endif
     mainlst.pop_front();
 
   }
+#ifdef SIZE
+  for( locs l: loc_list ) {
+    sqlite3_bind_int(locStmt,2,l.id);
+    sqlite3_bind_int(locStmt,3,l.file);
+    sqlite3_bind_int(locStmt,4,l.line);
+    sqlite3_step(locStmt);
+    sqlite3_clear_bindings(locStmt);
+    sqlite3_reset(locStmt);
+    ;//cout << l.id << endl;
+  }
+#endif
   sqlite3_exec(db,"END TRANSACTION",0,0,0);
 
   return 0;
