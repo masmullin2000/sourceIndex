@@ -2,26 +2,25 @@
 
 FileList::FileList()
 {
-  _fileName = nullptr;
 }
 
 FileList::FileList
 (
-  char* fileName
+  string &file
 )
 {
-  setFile( fileName );
+  setFile( file );
 }
 
 void
 FileList::setFile
 (
-  char* fileName
+  string  &file
 )
 {
-  _fileName = fileName;
+  _fileName = file;
   _fs.close();
-  _fs.open( _fileName, fstream::in );
+  _fs.open( _fileName.c_str(), fstream::in );
 }
 
 string

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SqliteAdapter.h"
+
 #include <string>
 #include <mutex>
 #include <unordered_map>
@@ -43,32 +45,36 @@ static mutex inMutex;
 class FileProcessor
 {
 public:
-  static FileProcessorErrors
+  FileProcessor();
+  ~FileProcessor();
+
+  FileProcessorErrors
   run
   (
-    sqlite3                          *db,
+    string                           &fList,
+    uint8_t                           threads
+  );
+private:
+  FileProcessorErrors
+  processFile
+  (
     string                            fName,
     unordered_map<string,uint32_t>   &ids,
     forward_list<Location>           &locs,
     uint32_t                         &id_key
   );
 
-  static
   FileProcessorErrors
   storeIdentifiers
   (
-    sqlite3                         *database,
     unordered_map<string,uint32_t>  &ids
   );
 
-  static
   FileProcessorErrors
   storeLocations
   (
-    sqlite3                         *database,
     forward_list<Location>           &locs
   );
-protected:
 
-private:
+  SqliteAdapter                     *sql;
 };

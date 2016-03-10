@@ -11,17 +11,17 @@ public:
 
   FileList
   (
-    char* fileName
+    string  &file
   );
 
   void setFile
   (
-    char* fileName
+    string  &file
   );
 
   string
   getNextFile();
 private:
-  char* _fileName;
-  fstream _fs;
+  string    _fileName;
+  fstream   _fs;
 };

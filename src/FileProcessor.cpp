@@ -1,5 +1,7 @@
 #include "FileProcessor.h"
+#include "FileList.h"
 #include "utils.h"
+#include "ThreadPool.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -11,13 +13,72 @@
 #include <sqlite3.h>
 
 using namespace std;
+using namespace concurrent;
+
 
 #define MAX_WORD_SZ 128
+
+#define FILE_DATABASE "files.db"
+#define IDENT_DATABASE "idents.db"
+#define LOCS_DATABASE "locs.db"
+
+FileProcessor::FileProcessor()
+{
+  sql = new SqliteAdapter(FILE_DATABASE,IDENT_DATABASE,LOCS_DATABASE);
+}
+
+FileProcessor::~FileProcessor()
+{
+  delete sql;
+}
 
 FileProcessorErrors
 FileProcessor::run
 (
-  sqlite3                          *db,
+  string                           &fList,
+  uint8_t                           threads
+)
+{
+  ThreadPool tp(threads);
+
+  FileList fl;
+  fl.setFile( fList );
+
+  unordered_map<string,uint32_t>  ids;
+  forward_list<Location>          locs;
+  uint32_t                        id_key = -1;
+
+  sql->startBulk(SqliteAdapter::FBASE);
+  string file = fl.getNextFile();
+  while( file.length() > 0 ) {
+    tp.AddJob(
+      [this,file,&ids,&locs,&id_key]() {
+        processFile(file,ids,locs,id_key);
+      }
+    );
+    file = fl.getNextFile();
+  }
+  tp.WaitAll();
+  sql->endBulk(SqliteAdapter::FBASE);
+
+  tp.AddJob( [this,&ids]() {
+    storeIdentifiers(ids);
+  });
+  tp.AddJob( [this,&locs]() {
+    storeLocations(locs);
+  });
+  tp.JoinAll();
+
+  ids.clear();
+  locs.clear();
+
+  return FileProcessorErrors::SUCCESS;
+}
+
+
+FileProcessorErrors
+FileProcessor::processFile
+(
   string                            fName,
   unordered_map<string,uint32_t>   &ids,
   forward_list<Location>           &locs,
@@ -43,20 +104,9 @@ FileProcessor::run
     return FileProcessorErrors::FILE_MMAP_ERROR;
 
   close(fd);
-  stringstream sqls;
-  sqls << "INSERT INTO Files (name) VALUES('" << fName << "');";
 
   unique_lock<mutex> lk(fileMutex);
-  sqlite3_stmt* iStmt;
-  if( SQLITE_OK != sqlite3_prepare_v2(db,sqls.str().c_str(),-1,&iStmt,0) ) {
-    cerr << "could not insert file [" <<sqls.str().c_str() << "]" << endl;
-    return FileProcessorErrors::SQL_INSERT;
-  }
-
-  sqlite3_step(iStmt);
-  sqlite3_finalize(iStmt);
-
-  uint32_t pk = sqlite3_last_insert_rowid(db);
+  uint32_t pk = sql->storeFile(fName);
   lk.unlock();
 
   char word[MAX_WORD_SZ];
@@ -112,37 +162,14 @@ FileProcessor::run
 FileProcessorErrors
 FileProcessor::storeIdentifiers
 (
-  sqlite3                         *database,
   unordered_map<string,uint32_t>  &ids
 )
 {
-  const char *sql = "DROP TABLE Identifiers;";
-  if( SQLITE_OK != sqlite3_exec(database,sql,0,0,0) ) {
-    cerr << "drop tables" << endl;
-  }
-
-  sql = "CREATE TABLE Identifiers("
-        "pk       INTEGER PRIMARY KEY,"
-        "name     TEXT    UNIQUE  NOT NULL);";
-
-  if( SQLITE_OK != sqlite3_exec(database,sql,0,0,0) ) {
-    return FileProcessorErrors::SQL_CREATE;
-  }
-
-  sqlite3_stmt  *idStmt;
-  if( SQLITE_OK != sqlite3_prepare_v2(database,"INSERT INTO Identifiers (pk,name)"
-                                         "VALUES (?,?);",256,&idStmt,0) ) {
-    return FileProcessorErrors::SQL_PREPARE;
-  }
-
-  sqlite3_exec(database,"BEGIN TRANSACTION",0,0,0);
+  sql->startBulk(SqliteAdapter::IBASE);
   for( auto id: ids ) {
-    sqlite3_bind_int(idStmt,1,id.second);
-    sqlite3_bind_text(idStmt,2,id.first.c_str(),-1,SQLITE_TRANSIENT);
-    sqlite3_step(idStmt);
-    sqlite3_reset(idStmt);
+    sql->storeIdentifier(id.first,id.second);
   }
-  sqlite3_exec(database,"END TRANSACTION",0,0,0);
+  sql->endBulk(SqliteAdapter::IBASE);
 
   return FileProcessorErrors::SUCCESS;
 }
@@ -150,41 +177,13 @@ FileProcessor::storeIdentifiers
 FileProcessorErrors
 FileProcessor::storeLocations
 (
-  sqlite3                         *database,
-  forward_list<Location>                  &locs
+  forward_list<Location>          &locs
 )
 {
-
-  const char *sql = "DROP TABLE Locations;";
-  if( SQLITE_OK != sqlite3_exec(database,sql,0,0,0) ) {
-    cerr << "drop tables" << endl;
-  }
-
-  sql = "CREATE TABLE Locations("
-        "pk       INTEGER PRIMARY KEY,"
-        "fk_id    INT             NOT NULL,"
-        "fk_file  INT             NOT NULL,"
-        "line     INT             NOT NULL);";
-
-  if( SQLITE_OK != sqlite3_exec(database,sql,0,0,0) ) {
-    return FileProcessorErrors::SQL_CREATE;
-  }
-
-  sqlite3_stmt  *locStmt;
-  if( SQLITE_OK != sqlite3_prepare_v2(database,"INSERT INTO Locations (pk,fk_id,fk_file,line)"
-                                               "VALUES (?,?,?,?);",256,&locStmt,0) ) {
-    return FileProcessorErrors::SQL_PREPARE;
-  }
-
-  sqlite3_exec(database,"BEGIN TRANSACTION",0,0,0);
+  sql->startBulk(SqliteAdapter::LBASE);
   for( Location l: locs ) {
-    sqlite3_bind_int(locStmt,2,l.fk_id);
-    sqlite3_bind_int(locStmt,3,l.fk_file);
-    sqlite3_bind_int(locStmt,4,l.line);
-    sqlite3_step(locStmt);
-    sqlite3_reset(locStmt);
+    sql->storeLocation(l);
   }
-  sqlite3_exec(database,"END TRANSACTION",0,0,0);
-
+  sql->endBulk(SqliteAdapter::LBASE);
   return FileProcessorErrors::SUCCESS;
 }

@@ -30,7 +30,8 @@ BLD=out
 OBJS=main.o \
      FileProcessor.o \
      utils.o \
-     FileList.o
+     FileList.o \
+     SqliteAdapter.o
 
 BLD_OBJS=$(addprefix $(BLD)/,$(OBJS))
 
