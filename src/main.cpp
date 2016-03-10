@@ -1,9 +1,12 @@
 #include <iostream>
 #include <list>
 #include <unordered_set>
+#include <unordered_map>
 #include <functional>
 
-#define DATABASE "test.db"
+#define FILE_DATABASE "files.db"
+#define IDENT_DATABASE "idents.db"
+#define LOCS_DATABASE "locs.db"
 #include <sqlite3.h>
 
 #include "FileProcessor.h"
@@ -13,31 +16,6 @@
 using namespace std;
 
 using namespace concurrent;
-
-sqlite3 *db;
-
-extern list<list<Identifier>> ids;
-
-extern bool operator<( const Identifier& lhs, const Identifier& rhs );
-
-bool operator==( const Identifier& lhs, const Identifier& rhs ) {
-  bool rc = true;
-  if( lhs.word.compare(rhs.word) != 0 ) rc = false;
-
-  return rc;
-}
-
-class ID_HASH
-{
-public:
-  size_t operator()( const Identifier& id ) const
-  {
-    return hash<string>()(id.word);
-  }
-};
-
-sqlite3_stmt *idStmt;
-sqlite3_stmt *locStmt;
 
 int main( int argc, char** argv )
 {
@@ -55,16 +33,32 @@ int main( int argc, char** argv )
   } else if( argc == 3 ) {
     threadAmt = atoi(argv[2]);
   }
+  sqlite3 *db_files;
+  sqlite3 *db_idents;
+  sqlite3 *db_locs;
+
   sqlite3_enable_shared_cache(1);
-  if( sqlite3_open(DATABASE,&db) ) {
+  if( sqlite3_open(FILE_DATABASE,&db_files) ) {
     return 1;
   }
-  sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
-  sqlite3_exec(db, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+  if( sqlite3_open(IDENT_DATABASE,&db_idents) ) {
+    return 1;
+  }
+  if( sqlite3_open(LOCS_DATABASE,&db_locs) ) {
+    return 1;
+  }
+  sqlite3_exec(db_files, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+  sqlite3_exec(db_files, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+  
+  sqlite3_exec(db_idents, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+  sqlite3_exec(db_idents, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+  
+  sqlite3_exec(db_locs, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+  sqlite3_exec(db_locs, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
   
 
   char const *sql = "DROP TABLE Files;";
-  if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
+  if( SQLITE_OK != sqlite3_exec(db_files,sql,0,0,0) ) {
     cerr << "drop tables" << endl;
   }
 
@@ -72,99 +66,52 @@ int main( int argc, char** argv )
         "pk     INTEGER PRIMARY KEY,"
         "name   TEXT            NOT NULL);";
 
-  if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
+  if( SQLITE_OK != sqlite3_exec(db_files,sql,0,0,0) ) {
     cerr << "create table" << endl;
     return 1;
   }
-
-  sql = "DROP TABLE Identifiers;";
-  if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
-    cerr << "drop tables" << endl;
-  }
-
-#ifdef SIZE
-  sql = "CREATE TABLE Identifiers("
-        "pk       INTEGER PRIMARY KEY,"
-        "name     TEXT    UNIQUE  NOT NULL);";
-
-  if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
-    cerr << "create table" << endl;
-    return 1;
-  }
-  
-  if( SQLITE_OK != sqlite3_prepare_v2(db,"INSERT INTO Identifiers (pk,name)"
-                                         "VALUES (?,?);",256,&idStmt,0) ) {
-    cerr << "prepare problem" << endl;
-    return 1;
-  }
-#endif
-
-  sql = "DROP TABLE Locations;";
-  if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
-    cerr << "drop tables" << endl;
-  }
-
-  sql = "CREATE TABLE Locations("
-        "pk       INTEGER PRIMARY KEY,"
-#ifdef SIZE
-        "fk_id    INT             NOT NULL,"
-#else
-        "name     TEXT            NOT NULL,"
-#endif
-        "fk_file  INT             NOT NULL,"
-        "line     INT             NOT NULL);";
-
-  if( SQLITE_OK != sqlite3_exec(db,sql,0,0,0) ) {
-    cerr << "create table" << endl;
-    return 1;
-  }
-
-
-#ifdef SIZE
-  if( SQLITE_OK != sqlite3_prepare_v2(db,"INSERT INTO Locations (pk,fk_id,fk_file,line)"
-                                         "VALUES (?,?,?,?);",256,&locStmt,0) ) {
-    cerr << "prepare problem loc size" << endl;
-    return 1;
-  }
-#else
-  if( SQLITE_OK != sqlite3_prepare_v2(db,"INSERT INTO Locations (pk,name,fk_file,line)"
-                                         "VALUES (?,?,?,?);",256,&locStmt,0) ) {
-    cerr << "prepare problem locations" << endl;
-    return 1;
-  }
-#endif
 
   static FileList fl;
   fl.setFile( argv[1] );
 
-  static ThreadPool tp(threadAmt);
+  ThreadPool tp(threadAmt);
 
-  sqlite3_exec(db,"BEGIN TRANSACTION",0,0,0);
+  sqlite3_exec(db_files,"BEGIN TRANSACTION",0,0,0);
 
-  ids.clear();
   string file = fl.getNextFile();
   if( file.length() == 0 ) {
     cerr << "File: " << argv[1] << " does not exist" << endl;
     return 1;
   }
   cout << "Start Reading Files" << endl;
-  int count = 1;
+  unordered_map<string,uint32_t>  ids;
+  list<Location>                  locs;
+  
+  uint32_t id_key = 0;
   while( file.length() > 0 ) {
     tp.AddJob(
-      [file]() {
+      [db_files,file,&ids,&locs,&id_key]() {
         FileProcessor fp;
-        fp.setFile( file );
-        fp.run();
+        fp.run(db_files,file,ids,locs,id_key);
       }
     );
     file = fl.getNextFile();
-    count++;
   }
-  
   tp.WaitAll();
-  cout << "files processed is " << count << endl;
 
-  sqlite3_exec(db,"END TRANSACTION",0,0,0);
+  sqlite3_exec(db_files,"END TRANSACTION",0,0,0);
+
+  tp.AddJob( [db_idents,&ids]() {
+    FileProcessor::storeIdentifiers(db_idents,ids);
+  });
+  tp.AddJob( [db_locs,&locs]() {
+    FileProcessor::storeLocations(db_locs,locs);
+  });
+  
+  tp.JoinAll();
+
+#ifdef old_way
+
 
   sqlite3_exec(db,"BEGIN TRANSACTION",0,0,0);
 
@@ -260,6 +207,6 @@ int main( int argc, char** argv )
 #endif
   tp.JoinAll();
   sqlite3_exec(db,"END TRANSACTION",0,0,0);
-
+#endif //#ifdef old_way
   return 0;
 }

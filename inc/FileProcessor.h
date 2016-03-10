@@ -3,42 +3,28 @@
 #include <string>
 #include <mutex>
 #include <sstream>
+#include <unordered_map>
+#include <list>
 
 #include <cstdint>
 
+#include <sqlite3.h>
+
 using namespace std;
 
-static mutex primaryKeyMutex;
-static mutex setInsertMutex;
+class Location
+{
+public:
+  uint32_t fk_id;
+  uint16_t fk_file;
+  uint16_t line;
+};
 
-
-class Identifier
+class Token
 {
 public:
   string    word;
-  uint32_t  file_key;
-  uint16_t  line_num;
-
-  Identifier
-  (
-    string  w,
-    int     file,
-    int     line
-  )
-  {
-    word = w;
-    file_key = file;
-    line_num = line;
-  }
-
-  const string
-  str() const
-  {
-    stringstream ss;
-    ss << word << ":" << file_key << ":" << line_num;
-
-    return ss.str();
-  }
+  uint16_t  line;
 };
 
 enum class FileProcessorErrors
@@ -47,29 +33,43 @@ enum class FileProcessorErrors
   FILE_NOT_FOUND,
   FILE_NO_STATUS,
   FILE_MMAP_ERROR,
+  SQL_CREATE,
   SQL_SELECT,
-  SQL_INSERT
+  SQL_INSERT,
+  SQL_PREPARE
 };
 
+static mutex fileMutex;
+static mutex inMutex;
 class FileProcessor
 {
 public:
-  FileProcessor();
-  FileProcessor
+  static FileProcessorErrors
+  run
   (
-    string fileName
+    sqlite3                          *db,
+    string                            fName,
+    unordered_map<string,uint32_t>   &ids,
+    list<Location>                   &locs,
+    uint32_t                         &id_key
   );
-
-  void setFile
-  (
-    string fileName
-  );
-
+  
+  static
   FileProcessorErrors
-  run();
-
+  storeIdentifiers
+  (
+    sqlite3                         *database,
+    unordered_map<string,uint32_t>  &ids
+  );
+  
+  static
+  FileProcessorErrors
+  storeLocations
+  (
+    sqlite3                         *database,
+    list<Location>                  &locs
+  );
 protected:
 
 private:
-  string _fileName;
 };
