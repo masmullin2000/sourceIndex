@@ -2,9 +2,8 @@
 
 #include <string>
 #include <mutex>
-#include <sstream>
 #include <unordered_map>
-#include <list>
+#include <forward_list>
 
 #include <cstdint>
 
@@ -50,10 +49,10 @@ public:
     sqlite3                          *db,
     string                            fName,
     unordered_map<string,uint32_t>   &ids,
-    list<Location>                   &locs,
+    forward_list<Location>           &locs,
     uint32_t                         &id_key
   );
-  
+
   static
   FileProcessorErrors
   storeIdentifiers
@@ -61,13 +60,13 @@ public:
     sqlite3                         *database,
     unordered_map<string,uint32_t>  &ids
   );
-  
+
   static
   FileProcessorErrors
   storeLocations
   (
     sqlite3                         *database,
-    list<Location>                  &locs
+    forward_list<Location>           &locs
   );
 protected:
 

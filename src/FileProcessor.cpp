@@ -3,24 +3,14 @@
 
 #include <iostream>
 #include <sstream>
-#include <list>
 
-
-#include <stdio.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <cstring>
 #include <sqlite3.h>
 
-#include "ThreadPool.hpp"
-
 using namespace std;
-using namespace concurrent;
-
-extern sqlite3_stmt *idStmt;
 
 #define MAX_WORD_SZ 128
 
@@ -30,7 +20,7 @@ FileProcessor::run
   sqlite3                          *db,
   string                            fName,
   unordered_map<string,uint32_t>   &ids,
-  list<Location>                   &locs,
+  forward_list<Location>           &locs,
   uint32_t                         &id_key
 )
 {
@@ -73,7 +63,7 @@ FileProcessor::run
   word[0] = '\0';
   int j = 0;
   int line = 1;
-  list<Token> toks;
+  forward_list<Token> toks;
 
 #define c file[i]
   for( int i = 0; i < sb.st_size; i++ ) {
@@ -102,14 +92,14 @@ FileProcessor::run
 
     auto f = ids.find(t.word);
 
-    uint32_t fk_id;    
+    uint32_t fk_id;
     if( f == ids.end() ) { // not found
       ids.emplace(t.word,++id_key);
       fk_id = id_key;
     } else { // found
       fk_id = f->second;
     }
-    
+
     Location l;
     l.fk_id = fk_id;
     l.fk_file = pk;
@@ -130,7 +120,7 @@ FileProcessor::storeIdentifiers
   if( SQLITE_OK != sqlite3_exec(database,sql,0,0,0) ) {
     cerr << "drop tables" << endl;
   }
- 
+
   sql = "CREATE TABLE Identifiers("
         "pk       INTEGER PRIMARY KEY,"
         "name     TEXT    UNIQUE  NOT NULL);";
@@ -162,7 +152,7 @@ FileProcessorErrors
 FileProcessor::storeLocations
 (
   sqlite3                         *database,
-  list<Location>                  &locs
+  forward_list<Location>                  &locs
 )
 {
 
@@ -200,6 +190,3 @@ FileProcessor::storeLocations
 
   return FileProcessorErrors::SUCCESS;
 }
-  
-  
-  

@@ -1,7 +1,4 @@
 #include <iostream>
-#include <list>
-#include <unordered_set>
-#include <unordered_map>
 #include <functional>
 
 #define FILE_DATABASE "files.db"
@@ -14,7 +11,6 @@
 #include "ThreadPool.hpp"
 
 using namespace std;
-
 using namespace concurrent;
 
 int main( int argc, char** argv )
@@ -49,13 +45,13 @@ int main( int argc, char** argv )
   }
   sqlite3_exec(db_files, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
   sqlite3_exec(db_files, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
-  
+
   sqlite3_exec(db_idents, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
   sqlite3_exec(db_idents, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
-  
+
   sqlite3_exec(db_locs, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
   sqlite3_exec(db_locs, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
-  
+
 
   char const *sql = "DROP TABLE Files;";
   if( SQLITE_OK != sqlite3_exec(db_files,sql,0,0,0) ) {
@@ -85,8 +81,8 @@ int main( int argc, char** argv )
   }
   cout << "Start Reading Files" << endl;
   unordered_map<string,uint32_t>  ids;
-  list<Location>                  locs;
-  
+  forward_list<Location>          locs;
+
   uint32_t id_key = 0;
   while( file.length() > 0 ) {
     tp.AddJob(
@@ -107,7 +103,7 @@ int main( int argc, char** argv )
   tp.AddJob( [db_locs,&locs]() {
     FileProcessor::storeLocations(db_locs,locs);
   });
-  
+
   tp.JoinAll();
 
   return 0;
