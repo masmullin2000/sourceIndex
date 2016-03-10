@@ -78,7 +78,7 @@ FileProcessor::run
         Token t;
         t.word = string(word);
         t.line = line;
-        toks.push_front(t);
+        toks.emplace_front(t);
       }
     }
   }
@@ -104,7 +104,7 @@ FileProcessor::run
     l.fk_id = fk_id;
     l.fk_file = pk;
     l.line = t.line;
-    locs.push_front(l);
+    locs.emplace_front(l);
   }
   return FileProcessorErrors::SUCCESS;
 }
@@ -138,9 +138,8 @@ FileProcessor::storeIdentifiers
   sqlite3_exec(database,"BEGIN TRANSACTION",0,0,0);
   for( auto id: ids ) {
     sqlite3_bind_int(idStmt,1,id.second);
-    sqlite3_bind_text(idStmt,2,id.first.c_str(),-1,SQLITE_STATIC);
+    sqlite3_bind_text(idStmt,2,id.first.c_str(),-1,SQLITE_TRANSIENT);
     sqlite3_step(idStmt);
-    sqlite3_clear_bindings(idStmt);
     sqlite3_reset(idStmt);
   }
   sqlite3_exec(database,"END TRANSACTION",0,0,0);
@@ -183,7 +182,6 @@ FileProcessor::storeLocations
     sqlite3_bind_int(locStmt,3,l.fk_file);
     sqlite3_bind_int(locStmt,4,l.line);
     sqlite3_step(locStmt);
-    sqlite3_clear_bindings(locStmt);
     sqlite3_reset(locStmt);
   }
   sqlite3_exec(database,"END TRANSACTION",0,0,0);

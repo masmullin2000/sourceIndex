@@ -44,13 +44,14 @@ int main( int argc, char** argv )
     return 1;
   }
   sqlite3_exec(db_files, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
-  sqlite3_exec(db_files, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+  sqlite3_exec(db_files, "PRAGMA journal_mode = MEMORY", NULL, NULL, NULL);
 
   sqlite3_exec(db_idents, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
-  sqlite3_exec(db_idents, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+  sqlite3_exec(db_idents, "PRAGMA journal_mode = MEMORY", NULL, NULL, NULL);
+
 
   sqlite3_exec(db_locs, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
-  sqlite3_exec(db_locs, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+  sqlite3_exec(db_locs, "PRAGMA journal_mode = MEMORY", NULL, NULL, NULL);
 
 
   char const *sql = "DROP TABLE Files;";
@@ -103,8 +104,10 @@ int main( int argc, char** argv )
   tp.AddJob( [db_locs,&locs]() {
     FileProcessor::storeLocations(db_locs,locs);
   });
-
   tp.JoinAll();
+
+  ids.clear();
+  locs.clear();
 
   return 0;
 }
