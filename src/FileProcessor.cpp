@@ -4,7 +4,6 @@
 #include "ThreadPool.hpp"
 
 #include <iostream>
-#include <sstream>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -14,7 +13,6 @@
 
 using namespace std;
 using namespace concurrent;
-
 
 #define MAX_WORD_SZ 128
 
@@ -74,7 +72,6 @@ FileProcessor::run
 
   return FileProcessorErrors::SUCCESS;
 }
-
 
 FileProcessorErrors
 FileProcessor::processFile

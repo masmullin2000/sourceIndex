@@ -1,5 +1,11 @@
-CC=gcc
-CPP=$(CC)
+
+ifdef CLANG
+  CC=clang
+  CPP=clang++
+else
+  CC=gcc
+  CPP=g++
+endif
 
 SRC=src
 INC=inc $(SRC)
@@ -49,7 +55,7 @@ $(APP): $(BLD) $(EXE)
 	-cp $(BLD)/$(EXE) $(APP)
 
 $(EXE): $(BLD_OBJS)
-	$(CPP) -o $(BLD)/$(EXE) $^ -lpthread -lsqlite3 -lstdc++
+	$(CPP) -o $(BLD)/$(EXE) $^ -lpthread -lsqlite3
 
 $(BLD):
 	-mkdir $(BLD)
