@@ -73,14 +73,20 @@ SqliteAdapter::SqliteAdapter
   }
 
   // --Create the prepared statements--
+  if( SQLITE_OK != sqlite3_prepare_v2(_filesDb,"INSERT INTO Files (pk,name)"
+                                               "VALUES (?,?);",256,&_fileStmt,0) ) {
+    _state = false;
+    return;
+  }
+
   if( SQLITE_OK != sqlite3_prepare_v2(_identsDb,"INSERT INTO Identifiers (pk,name)"
-                                                 "VALUES (?,?);",256,&_idStmt,0) ) {
+                                                "VALUES (?,?);",256,&_idStmt,0) ) {
     _state = false;
     return;
   }
 
   if( SQLITE_OK != sqlite3_prepare_v2(_locsDb,"INSERT INTO Locations (pk,fk_id,fk_file,line)"
-                                               "VALUES (?,?,?,?);",256,&_locStmt,0) ) {
+                                              "VALUES (?,?,?,?);",256,&_locStmt,0) ) {
     _state = false;
     return;
   }
@@ -94,6 +100,7 @@ SqliteAdapter::~SqliteAdapter()
 
   sqlite3_finalize(_locStmt);
   sqlite3_finalize(_idStmt);
+  sqlite3_finalize(_fileStmt);
 }
 
 void
@@ -102,6 +109,8 @@ SqliteAdapter::setPragmas
   sqlite3    *db
 )
 {
+  sqlite3_exec(db, "PRAGMA page_size = 4096", NULL, NULL, NULL);
+  sqlite3_exec(db, "PRAGMA default_cache_size=20000", NULL, NULL, NULL);
   sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
   sqlite3_exec(db, "PRAGMA journal_mode = MEMORY", NULL, NULL, NULL);
 }
@@ -112,15 +121,9 @@ SqliteAdapter::storeFile
   const string &file
 )
 {
-  sqlite3_stmt* stmt;
-  stringstream sqls;
-  sqls << "INSERT INTO Files (name) VALUES('" << file << "');";
-  if( SQLITE_OK != sqlite3_prepare_v2(_filesDb,sqls.str().c_str(),-1,&stmt,0) ) {
-    _state = false;
-    return -1;
-  }
-  sqlite3_step(stmt);
-  sqlite3_finalize(stmt);
+  sqlite3_bind_text(_fileStmt,2,file.c_str(),-1,SQLITE_TRANSIENT);
+  sqlite3_step(_fileStmt);
+  sqlite3_reset(_fileStmt);
 
   return sqlite3_last_insert_rowid(_filesDb);
 }
@@ -175,9 +178,9 @@ SqliteAdapter::getDataBase
   const uint8_t    baseID
 )
 {
-  if( baseID == FBASE ) return _filesDb;
-  if( baseID == IBASE ) return _identsDb;
   if( baseID == LBASE ) return _locsDb;
+  if( baseID == IBASE ) return _identsDb;
+  if( baseID == FBASE ) return _filesDb;
 
   return nullptr;
 }

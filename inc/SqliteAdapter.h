@@ -68,6 +68,7 @@ private:
     const uint8_t   baseID
   );
 
+  sqlite3_stmt  *_fileStmt;
   sqlite3_stmt  *_locStmt;
   sqlite3_stmt  *_idStmt;
 
