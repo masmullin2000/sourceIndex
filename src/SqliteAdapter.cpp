@@ -109,8 +109,8 @@ SqliteAdapter::setPragmas
   sqlite3    *db
 )
 {
-  sqlite3_exec(db, "PRAGMA page_size = 4096", NULL, NULL, NULL);
-  sqlite3_exec(db, "PRAGMA default_cache_size=20000", NULL, NULL, NULL);
+  sqlite3_exec(db, "PRAGMA page_size = 65536", NULL, NULL, NULL);
+  sqlite3_exec(db, "PRAGMA default_cache_size=10000", NULL, NULL, NULL);
   sqlite3_exec(db, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
   sqlite3_exec(db, "PRAGMA journal_mode = MEMORY", NULL, NULL, NULL);
 }
