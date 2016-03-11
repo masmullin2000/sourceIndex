@@ -121,7 +121,7 @@ SqliteAdapter::storeFile
   const string &file
 )
 {
-  sqlite3_bind_text(_fileStmt,2,file.c_str(),-1,SQLITE_TRANSIENT);
+  sqlite3_bind_text(_fileStmt,2,file.c_str(),-1,SQLITE_STATIC);
   sqlite3_step(_fileStmt);
   sqlite3_reset(_fileStmt);
 
@@ -136,7 +136,7 @@ SqliteAdapter::storeIdentifier
 )
 {
   sqlite3_bind_int(_idStmt,1,key);
-  sqlite3_bind_text(_idStmt,2,name.c_str(),-1,SQLITE_TRANSIENT);
+  sqlite3_bind_text(_idStmt,2,name.c_str(),-1,SQLITE_STATIC);
   sqlite3_step(_idStmt);
   sqlite3_reset(_idStmt);
 }
