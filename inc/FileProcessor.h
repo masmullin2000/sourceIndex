@@ -52,7 +52,8 @@ public:
   run
   (
     string                           &fList,
-    uint8_t                           threads
+    uint8_t                           threads,
+    bool                              mm = false
   );
 private:
   FileProcessorErrors
@@ -77,4 +78,5 @@ private:
   );
 
   SqliteAdapter                     *sql;
+  bool                               massive_memory;
 };

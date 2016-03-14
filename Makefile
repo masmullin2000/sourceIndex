@@ -8,7 +8,7 @@ else
 endif
 
 SRC=src
-INC=inc $(SRC)
+INC=inc $(SRC) ../include/
 INCS=$(addprefix -I,$(INC))
 
 ifdef DBG

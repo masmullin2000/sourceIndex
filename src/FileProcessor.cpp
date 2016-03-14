@@ -23,6 +23,7 @@ using namespace concurrent;
 FileProcessor::FileProcessor()
 {
   sql = new SqliteAdapter(FILE_DATABASE,IDENT_DATABASE,LOCS_DATABASE);
+  massive_memory = false;
 }
 
 FileProcessor::~FileProcessor()
@@ -34,9 +35,11 @@ FileProcessorErrors
 FileProcessor::run
 (
   string                           &fList,
-  uint8_t                           threads
+  uint8_t                           threads,
+  bool                              mm
 )
 {
+  massive_memory = mm;
   ThreadPool tp(threads);
 
   FileList fl;
@@ -47,6 +50,8 @@ FileProcessor::run
   uint32_t                        id_key = -1;
 
   sql->startBulk(SqliteAdapter::FBASE);
+  sql->startBulk(SqliteAdapter::IBASE);
+  sql->startBulk(SqliteAdapter::LBASE);
   string file = fl.getNextFile();
   while( file.length() > 0 ) {
     tp.AddJob(
@@ -57,14 +62,18 @@ FileProcessor::run
     file = fl.getNextFile();
   }
   tp.WaitAll();
+  sql->endBulk(SqliteAdapter::LBASE);
+  sql->endBulk(SqliteAdapter::IBASE);
   sql->endBulk(SqliteAdapter::FBASE);
 
   tp.AddJob( [this,&ids]() {
-    storeIdentifiers(ids);
-  });
-  tp.AddJob( [this,&locs]() {
-    storeLocations(locs);
-  });
+      storeIdentifiers(ids);
+    });
+  if( massive_memory ) {
+    tp.AddJob( [this,&locs]() {
+      storeLocations(locs);
+    });
+  }
   tp.JoinAll();
 
   ids.clear();
@@ -114,7 +123,6 @@ FileProcessor::processFile
 
 #define c file[i]
   for( int i = 0; i < sb.st_size; i++ ) {
-    //char c = file[i];
     if( (IsIdentifierNonDigit(c) || IsDigit(c)) && j < MAX_WORD_SZ-1 ) {
       word[j++] = c;
     } else {
@@ -151,7 +159,10 @@ FileProcessor::processFile
     l.fk_id = fk_id;
     l.fk_file = pk;
     l.line = t.line;
-    locs.emplace_front(l);
+    if( massive_memory )
+      locs.emplace_front(l);
+    else
+      sql->storeLocation(l);
   }
   return FileProcessorErrors::SUCCESS;
 }
