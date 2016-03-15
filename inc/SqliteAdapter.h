@@ -42,6 +42,9 @@ public:
   (
     const Location  &l
   );
+  
+  void
+  indexLocations();
 
   void
   startBulk

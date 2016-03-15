@@ -155,6 +155,12 @@ SqliteAdapter::storeLocation
 }
 
 void
+SqliteAdapter::indexLocations()
+{
+  sqlite3_exec(_locsDb,"CREATE INDEX fk_id_sort ON Locations(fk_id);",0,0,0);
+}
+
+void
 SqliteAdapter::startBulk
 (
   const uint8_t    baseID

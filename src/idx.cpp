@@ -20,11 +20,13 @@ int main( int argc, char** argv )
 
     ValueArg<string> file_list_param("f","fileList","A list of files to be processed",true,"f.lst","string");
     ValueArg<int> threadAmt_list_param("t","threads","How many threads to use (default is #of cpu threads)",false,-1,"integer");
-    SwitchArg massive_memory_param("m","massive_memory","set to use massive amounts of memory to speed up processing",false);
+    SwitchArg massive_memory_param("m","massive_memory","set to use massive amounts of memory to speed up database creation",false);
+    SwitchArg index_param("i","index_database","massively speed up searching, indexing will significantly increase database creation time",false);
 
     cmd.add(file_list_param);
     cmd.add(threadAmt_list_param);
     cmd.add(massive_memory_param);
+    cmd.add(index_param);
 
     cmd.parse(argc,argv);
 
@@ -33,9 +35,10 @@ int main( int argc, char** argv )
       threadAmt = threadAmt_list_param.getValue();
     }
     bool massive_memory = massive_memory_param.getValue();
+    bool idx = index_param.getValue();
 
     FileProcessor fp;
-    fp.run( fList, threadAmt, massive_memory );
+    fp.run( fList, threadAmt, massive_memory, idx );
   } catch( ArgException &e ) {
     cerr << "error " << e.error() << endl;
   }

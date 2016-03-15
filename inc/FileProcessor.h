@@ -53,7 +53,8 @@ public:
   (
     string                           &fList,
     uint8_t                           threads,
-    bool                              mm = false
+    bool                              mm = false,
+    bool                              idx = true
   );
 private:
   FileProcessorErrors

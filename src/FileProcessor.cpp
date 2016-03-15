@@ -33,7 +33,8 @@ FileProcessor::run
 (
   string                           &fList,
   uint8_t                           threads,
-  bool                              mm
+  bool                              mm,
+  bool                              idx
 )
 {
   massive_memory = mm;
@@ -71,7 +72,12 @@ FileProcessor::run
       storeLocations(locs);
     });
   }
+
   tp.JoinAll();
+  
+  if( idx ) {
+    sql->indexLocations();
+  }
 
   ids.clear();
   locs.clear();
