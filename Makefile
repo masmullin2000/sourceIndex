@@ -29,33 +29,46 @@ vpath %.c $(SRC)
 vpath %.cpp $(SRC)
 vpath %.h %(INC)
 
-APP=si
-EXE=$(APP)_e
+IDX=idx
+EXE_IDX=$(BLD)/$(IDX)
+SRCH=srch
+EXE_SRCH=$(BLD)/$(SRCH)
+
 BLD=out
 
-OBJS=main.o \
+IOBJS=idx.o \
      FileProcessor.o \
      utils.o \
      FileList.o \
      SqliteAdapter.o
 
-BLD_OBJS=$(addprefix $(BLD)/,$(OBJS))
+SOBJS=srch.o
+
+IDX_OBJS=$(addprefix $(BLD)/,$(IOBJS))
+SRCH_OBJS=$(addprefix $(BLD)/,$(SOBJS))
 
 test: all
-	./$(APP) files.lst
+	./$(IDX) files.lst
 
 clean:
 	-rm -rf $(BLD)
-	-rm $(APP)
+	-rm $(IDX)
+	-rm $(SRCH)
 	-rm *.db*
 
-all: $(APP)
+all: $(IDX) $(SRCH)
 
-$(APP): $(BLD) $(EXE)
-	-cp $(BLD)/$(EXE) $(APP)
+$(SRCH): $(BLD) $(EXE_SRCH)
+	-cp $(EXE_SRCH) $(SRCH)
 
-$(EXE): $(BLD_OBJS)
-	$(CPP) -o $(BLD)/$(EXE) $^ -lpthread -lsqlite3
+$(IDX): $(BLD) $(EXE_IDX)
+	-cp $(EXE_IDX) $(IDX)
+
+$(EXE_IDX): $(IDX_OBJS)
+	$(CPP) -o $(EXE_IDX) $^ -lpthread -lsqlite3
+
+$(EXE_SRCH): $(SRCH_OBJS)
+	$(CPP) -o $(EXE_SRCH) $^ -lpthread -lsqlite3
 
 $(BLD):
 	-mkdir $(BLD)

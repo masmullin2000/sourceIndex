@@ -1,6 +1,7 @@
 #include "FileProcessor.h"
 #include "FileList.h"
 #include "utils.h"
+#include "i_si.h"
 #include "ThreadPool.hpp"
 
 #include <iostream>
@@ -15,10 +16,6 @@ using namespace std;
 using namespace concurrent;
 
 #define MAX_WORD_SZ 128
-
-#define FILE_DATABASE "files.db"
-#define IDENT_DATABASE "idents.db"
-#define LOCS_DATABASE "locs.db"
 
 FileProcessor::FileProcessor()
 {
