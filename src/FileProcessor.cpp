@@ -5,6 +5,7 @@
 #include "ThreadPool.hpp"
 
 #include <iostream>
+#include <cstring>
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -19,7 +20,7 @@ using namespace concurrent;
 
 FileProcessor::FileProcessor()
 {
-  sql = new SqliteAdapter(FILE_DATABASE,IDENT_DATABASE,LOCS_DATABASE);
+  sql = new SqliteAdapterInsert(FILE_DATABASE,IDENT_DATABASE,LOCS_DATABASE);
   massive_memory = false;
 }
 
@@ -129,7 +130,6 @@ FileProcessor::processFile
     if( (IsIdentifierNonDigit(c) || IsDigit(c)) && j < MAX_WORD_SZ-1 ) {
       word[j++] = c;
     } else {
-      if( c == '\n' ) line++;
       word[j] = '\0';
       j = 0;
       if( word[0] != '\0' && !IsDigit(word[0]) ) {
@@ -138,6 +138,7 @@ FileProcessor::processFile
         t.line = line;
         toks.emplace_front(t);
       }
+      if( c == '\n' ) line++;
     }
   }
 #undef c

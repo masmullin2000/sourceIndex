@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SqliteAdapter.h"
+#include "SqliteAdapterInsert.h"
 
 #include <string>
 #include <mutex>
@@ -78,6 +78,6 @@ private:
     forward_list<Location>           &locs
   );
 
-  SqliteAdapter                     *sql;
+  SqliteAdapterInsert               *sql;
   bool                               massive_memory;
 };

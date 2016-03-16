@@ -40,7 +40,8 @@ IOBJS=idx.o \
      FileProcessor.o \
      utils.o \
      FileList.o \
-     SqliteAdapter.o
+     SqliteAdapter.o \
+     SqliteAdapterInsert.o
 
 SOBJS=srch.o
 

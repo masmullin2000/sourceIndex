@@ -15,51 +15,10 @@ public:
   static const uint8_t IBASE     = 1;
   static const uint8_t LBASE     = 2;
 
-  SqliteAdapter
-  (
-    string  filesDbName,
-    string  identsDbName,
-    string  locsDbName
-  );
+  SqliteAdapter();
 
-  ~SqliteAdapter();
-
-  uint32_t
-  storeFile
-  (
-    const string    &file
-  );
-
-  void
-  storeIdentifier
-  (
-    const string    &name,
-    const uint32_t  &key
-  );
-
-  void
-  storeLocation
-  (
-    const Location  &l
-  );
-  
-  void
-  indexLocations();
-
-  void
-  startBulk
-  (
-    const uint8_t    baseID
-  );
-
-  void
-  endBulk
-  (
-    const uint8_t    baseID
-  );
-
-  SqliteAdapter() = delete;
-private:
+  virtual ~SqliteAdapter();
+protected:
   bool       _state;
   sqlite3   *_filesDb;
   sqlite3   *_identsDb;
@@ -71,11 +30,25 @@ private:
     const uint8_t   baseID
   );
 
-  sqlite3_stmt  *_fileStmt;
-  sqlite3_stmt  *_locStmt;
-  sqlite3_stmt  *_idStmt;
+  void
+  openDatabases
+  (
+    const string   &filesDbName,
+    const string   &identsDbName,
+    const string   &locsDbName,
+    const bool      readOnly
+  );
+private:
+  void
+  openDatabase
+  (
+    int               flags,
+    const string     &dbname,
+    sqlite3         **db
+  );
 
-  void setPragmas
+  void
+  setPragmas
   (
     sqlite3   *db
   );
