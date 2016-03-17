@@ -24,6 +24,10 @@ protected:
   sqlite3   *_identsDb;
   sqlite3   *_locsDb;
 
+  sqlite3_stmt  *_fileStmt;
+  sqlite3_stmt  *_locStmt;
+  sqlite3_stmt  *_idStmt;
+
   sqlite3*
   getDataBase
   (

@@ -1,7 +1,5 @@
 #include "SqliteAdapter.h"
 
-using namespace std;
-
 SqliteAdapter::SqliteAdapter()
 {
   _state = true;
@@ -12,6 +10,10 @@ SqliteAdapter::SqliteAdapter()
 
 SqliteAdapter::~SqliteAdapter()
 {
+  sqlite3_finalize(_locStmt);
+  sqlite3_finalize(_idStmt);
+  sqlite3_finalize(_fileStmt);
+
   sqlite3_close_v2(_filesDb);
   sqlite3_close_v2(_identsDb);
   sqlite3_close_v2(_locsDb);

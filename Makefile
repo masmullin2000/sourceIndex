@@ -43,7 +43,9 @@ IOBJS=idx.o \
      SqliteAdapter.o \
      SqliteAdapterInsert.o
 
-SOBJS=srch.o
+SOBJS=srch.o \
+    SqliteAdapter.o \
+    SqliteAdapterQuery.o
 
 IDX_OBJS=$(addprefix $(BLD)/,$(IOBJS))
 SRCH_OBJS=$(addprefix $(BLD)/,$(SOBJS))

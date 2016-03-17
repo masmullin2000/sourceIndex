@@ -11,8 +11,6 @@ public:
     const string  identsDbName,
     const string  locsDbName
   );
-  
-  virtual ~SqliteAdapterInsert();
 
   uint32_t
   storeFile
@@ -50,7 +48,5 @@ public:
   
   SqliteAdapterInsert() = delete;
 private:
-  sqlite3_stmt  *_fileStmt;
-  sqlite3_stmt  *_locStmt;
-  sqlite3_stmt  *_idStmt;
+
 };

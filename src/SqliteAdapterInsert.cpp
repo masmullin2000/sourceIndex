@@ -37,7 +37,6 @@ SqliteAdapterInsert::SqliteAdapterInsert
   }
 
   sql = "CREATE TABLE Locations("
-        "pk       INTEGER PRIMARY KEY,"
         "fk_id    INT             NOT NULL,"
         "fk_file  INT             NOT NULL,"
         "line     INT             NOT NULL);";
@@ -60,18 +59,11 @@ SqliteAdapterInsert::SqliteAdapterInsert
     return;
   }
 
-  if( SQLITE_OK != sqlite3_prepare_v2(_locsDb,"INSERT INTO Locations (pk,fk_id,fk_file,line)"
-                                              "VALUES (?,?,?,?);",256,&_locStmt,0) ) {
+  if( SQLITE_OK != sqlite3_prepare_v2(_locsDb,"INSERT INTO Locations (fk_id,fk_file,line)"
+                                              "VALUES (?,?,?);",256,&_locStmt,0) ) {
     _state = false;
     return;
   }
-}
-
-SqliteAdapterInsert::~SqliteAdapterInsert()
-{
-  sqlite3_finalize(_locStmt);
-  sqlite3_finalize(_idStmt);
-  sqlite3_finalize(_fileStmt);
 }
 
 uint32_t
@@ -106,9 +98,9 @@ SqliteAdapterInsert::storeLocation
   const Location  &l
 )
 {
-  sqlite3_bind_int(_locStmt,2,l.fk_id);
-  sqlite3_bind_int(_locStmt,3,l.fk_file);
-  sqlite3_bind_int(_locStmt,4,l.line);
+  sqlite3_bind_int(_locStmt,1,l.fk_id);
+  sqlite3_bind_int(_locStmt,2,l.fk_file);
+  sqlite3_bind_int(_locStmt,3,l.line);
   sqlite3_step(_locStmt);
   sqlite3_reset(_locStmt);
 }
