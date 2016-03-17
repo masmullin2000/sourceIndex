@@ -163,6 +163,7 @@ FileProcessor::processFile
     l.fk_id = fk_id;
     l.fk_file = pk;
     l.line = t.line;
+
     if( massive_memory )
       locs.emplace_front(l);
     else

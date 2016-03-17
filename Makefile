@@ -1,4 +1,3 @@
-
 ifdef CLANG
   CC=clang
   CPP=clang++
@@ -15,10 +14,6 @@ ifdef DBG
   OPT_OR_DBG=-g
 else
   OPT_OR_DBG=-O3
-endif
-
-ifdef SZ
-  OPT_OR_DBG+=-DSIZE
 endif
 
 C_C=$(CC) -Wall -x c++ $(gDEFs) $(INCS)

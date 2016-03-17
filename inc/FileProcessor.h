@@ -17,7 +17,7 @@ class Location
 {
 public:
   uint32_t fk_id;
-  uint16_t fk_file;
+  uint32_t fk_file;
   uint16_t line;
 };
 

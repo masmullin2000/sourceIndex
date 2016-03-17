@@ -19,7 +19,7 @@ public:
   );
 
   forward_list<tuple<string,uint16_t>>*
-  findExact
+  find
   (
     const string  &name
   );

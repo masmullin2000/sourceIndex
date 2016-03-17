@@ -21,7 +21,7 @@ int main( int argc, char** argv )
 
     SqliteAdapterQuery saq(FILE_DATABASE,IDENT_DATABASE,LOCS_DATABASE);
 
-    forward_list<tuple<string,uint16_t>>* foundList = saq.findExact(findName);
+    forward_list<tuple<string,uint16_t>>* foundList = saq.find(findName);
     if( foundList != nullptr ) {
       while( !foundList->empty() ) {
         tuple<string,uint16_t> tup = foundList->front();
