@@ -29,10 +29,10 @@ SqliteAdapter::openDatabases
 )
 {
   int flags = SQLITE_OPEN_NOMUTEX;
-  
+
   if( readOnly )  flags |= SQLITE_OPEN_READONLY;
   else            flags |= SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE;
-  
+
   openDatabase(flags,filesDbName,&_filesDb);
   openDatabase(flags,identsDbName,&_identsDb);
   openDatabase(flags,locsDbName,&_locsDb);

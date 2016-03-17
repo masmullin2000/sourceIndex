@@ -3,9 +3,9 @@
 
 SqliteAdapterInsert::SqliteAdapterInsert
 (
-  const string  filesDbName,
-  const string  identsDbName,
-  const string  locsDbName
+  const string  &filesDbName,
+  const string  &identsDbName,
+  const string  &locsDbName
 ) : SqliteAdapter()
 {
   openDatabases(filesDbName,identsDbName,locsDbName,false);

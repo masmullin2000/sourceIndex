@@ -7,9 +7,9 @@ class SqliteAdapterInsert : public SqliteAdapter
 public:
   SqliteAdapterInsert
   (
-    const string  filesDbName,
-    const string  identsDbName,
-    const string  locsDbName
+    const string  &filesDbName,
+    const string  &identsDbName,
+    const string  &locsDbName
   );
 
   uint32_t
@@ -30,7 +30,7 @@ public:
   (
     const Location  &l
   );
-  
+
   void
   indexLocations();
 
@@ -45,7 +45,7 @@ public:
   (
     const uint8_t    baseID
   );
-  
+
   SqliteAdapterInsert() = delete;
 private:
 

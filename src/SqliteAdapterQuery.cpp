@@ -2,13 +2,13 @@
 
 SqliteAdapterQuery::SqliteAdapterQuery
 (
-  const string  filesDbName,
-  const string  identsDbName,
-  const string  locsDbName
+  const string  &filesDbName,
+  const string  &identsDbName,
+  const string  &locsDbName
 ) : SqliteAdapter()
 {
   openDatabases(filesDbName,identsDbName,locsDbName,true);
-  
+
   if( (SQLITE_OK != sqlite3_prepare( _identsDb,"SELECT * FROM Identifiers where name == ?",-1,&_idStmt,0)) ||
       (SQLITE_OK != sqlite3_prepare( _locsDb,"SELECT * FROM Locations where fk_id == ?",-1,&_locStmt,0)) ||
       (SQLITE_OK != sqlite3_prepare( _filesDb,"SELECT * FROM Files where pk == ?",-1,&_fileStmt,0)) ) {
@@ -44,11 +44,11 @@ SqliteAdapterQuery::findExact
       fName = sqlite3_column_text(_fileStmt,1);
     }
 
-    tuple<string,uint16_t> tup(string((const char*)fName),line);
+    tuple<string,uint16_t> tup((const char*)fName,line);
     rc->push_front(tup);
-    
+
     sqlite3_reset(_fileStmt);
   }
-  
+
   return rc;
 }

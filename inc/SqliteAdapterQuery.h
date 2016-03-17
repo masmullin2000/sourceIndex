@@ -13,11 +13,11 @@ class SqliteAdapterQuery : public SqliteAdapter
 public:
   SqliteAdapterQuery
   (
-    const string  filesDbName,
-    const string  identsDbName,
-    const string  locsDbName
+    const string  &filesDbName,
+    const string  &identsDbName,
+    const string  &locsDbName
   );
-  
+
   forward_list<tuple<string,uint16_t>>*
   findExact
   (
