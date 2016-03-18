@@ -68,17 +68,16 @@ FileProcessor::run
   tp.AddJob( [this,&ids]() {
       storeIdentifiers(ids);
     });
-  if( massive_memory ) {
-    tp.AddJob( [this,&locs]() {
+  tp.AddJob( [this,&locs,idx]() {
+    if( massive_memory ) {
       storeLocations(locs);
-    });
-  }
+    }
+    if( idx ) {
+      sql->indexLocations();
+    }
+  });
 
   tp.JoinAll();
-  
-  if( idx ) {
-    sql->indexLocations();
-  }
 
   ids.clear();
   locs.clear();
