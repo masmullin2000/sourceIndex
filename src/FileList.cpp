@@ -1,13 +1,13 @@
 #include "FileList.h"
 
-FileList::FileList()
+FileList::FileList() noexcept
 {
 }
 
 FileList::FileList
 (
   string &file
-)
+) noexcept
 {
   setFile( file );
 }
@@ -16,7 +16,7 @@ void
 FileList::setFile
 (
   string  &file
-)
+) noexcept
 {
   _fileName = file;
   _fs.close();
@@ -24,7 +24,7 @@ FileList::setFile
 }
 
 string
-FileList::getNextFile()
+FileList::getNextFile() noexcept
 {
   string str;
   getline(_fs, str);

@@ -5,7 +5,7 @@ bool
 IsIdentifierNonDigit
 (
   uint32_t cp
-)
+) noexcept
 {
   switch( cp )
   {
@@ -46,7 +46,7 @@ bool
 IsDigit
 (
   uint32_t cp
-)
+) noexcept
 {
   switch( cp )
   {

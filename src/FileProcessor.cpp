@@ -18,13 +18,13 @@ using namespace concurrent;
 
 #define MAX_WORD_SZ 128
 
-FileProcessor::FileProcessor()
+FileProcessor::FileProcessor() noexcept
 {
   sql = new SqliteAdapterInsert(FILE_DATABASE,IDENT_DATABASE,LOCS_DATABASE);
   massive_memory = false;
 }
 
-FileProcessor::~FileProcessor()
+FileProcessor::~FileProcessor() noexcept
 {
   delete sql;
 }
@@ -36,7 +36,7 @@ FileProcessor::run
   uint8_t                           threads,
   bool                              mm,
   bool                              idx
-)
+) noexcept
 {
   massive_memory = mm;
   ThreadPool tp(threads);
@@ -54,7 +54,7 @@ FileProcessor::run
   string file = fl.getNextFile();
   while( file.length() > 0 ) {
     tp.AddJob(
-      [this,file,&ids,&locs,&id_key]() {
+      [this,file,&ids,&locs,&id_key]() noexcept {
         processFile(file,ids,locs,id_key);
       }
     );
@@ -65,20 +65,21 @@ FileProcessor::run
   sql->endBulk(SqliteAdapter::IBASE);
   sql->endBulk(SqliteAdapter::FBASE);
 
-  tp.AddJob( [this,&ids]() {
+  tp.AddJob( [this,&ids]() noexcept {
       storeIdentifiers(ids);
     });
-  if( massive_memory ) {
-    tp.AddJob( [this,&locs]() {
+  tp.AddJob( [this,&locs,idx]() noexcept {
+    if( massive_memory ) {
       storeLocations(locs);
-    });
-  }
+      if( idx ) {
+        sql->indexLocations();
+      }
+    } else if( idx ) {
+      sql->indexLocations();
+    }
+  }); 
 
   tp.JoinAll();
-  
-  if( idx ) {
-    sql->indexLocations();
-  }
 
   ids.clear();
   locs.clear();
@@ -93,7 +94,7 @@ FileProcessor::processFile
   unordered_map<string,uint32_t>   &ids,
   forward_list<Location>           &locs,
   uint32_t                         &id_key
-)
+) noexcept
 {
   if( fName.length() < 1 )
     return FileProcessorErrors::FILE_NOT_FOUND;
@@ -176,10 +177,10 @@ FileProcessorErrors
 FileProcessor::storeIdentifiers
 (
   unordered_map<string,uint32_t>  &ids
-)
+) noexcept
 {
   sql->startBulk(SqliteAdapter::IBASE);
-  for( auto id: ids ) {
+  for( auto &id: ids ) {
     sql->storeIdentifier(id.first,id.second);
   }
   sql->endBulk(SqliteAdapter::IBASE);
@@ -191,10 +192,10 @@ FileProcessorErrors
 FileProcessor::storeLocations
 (
   forward_list<Location>          &locs
-)
+) noexcept
 {
   sql->startBulk(SqliteAdapter::LBASE);
-  for( Location l: locs ) {
+  for( Location &l: locs ) {
     sql->storeLocation(l);
   }
   sql->endBulk(SqliteAdapter::LBASE);

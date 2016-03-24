@@ -1,6 +1,6 @@
 #include "SqliteAdapter.h"
 
-SqliteAdapter::SqliteAdapter()
+SqliteAdapter::SqliteAdapter() noexcept
 {
   _state = true;
 
@@ -8,7 +8,7 @@ SqliteAdapter::SqliteAdapter()
   sqlite3_enable_shared_cache(1);
 }
 
-SqliteAdapter::~SqliteAdapter()
+SqliteAdapter::~SqliteAdapter() noexcept
 {
   sqlite3_finalize(_locStmt);
   sqlite3_finalize(_idStmt);
@@ -26,7 +26,7 @@ SqliteAdapter::openDatabases
   const string     &identsDbName,
   const string     &locsDbName,
   const bool        readOnly
-)
+) noexcept
 {
   int flags = SQLITE_OPEN_NOMUTEX;
 
@@ -44,7 +44,7 @@ SqliteAdapter::openDatabase
   int             flags,
   const string   &dbName,
   sqlite3       **db
-)
+) noexcept
 {
   if( sqlite3_open_v2(dbName.c_str(),db,flags,nullptr) ) {
     _state = false;
@@ -56,7 +56,7 @@ void
 SqliteAdapter::setPragmas
 (
   sqlite3    *db
-)
+) noexcept
 {
   sqlite3_exec(db, "PRAGMA page_size = 65536", NULL, NULL, NULL);
   sqlite3_exec(db, "PRAGMA default_cache_size=10000", NULL, NULL, NULL);
@@ -68,7 +68,7 @@ sqlite3*
 SqliteAdapter::getDataBase
 (
   const uint8_t    baseID
-)
+) noexcept
 {
   if( baseID == LBASE ) return _locsDb;
   if( baseID == IBASE ) return _identsDb;

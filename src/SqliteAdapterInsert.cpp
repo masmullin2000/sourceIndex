@@ -6,7 +6,7 @@ SqliteAdapterInsert::SqliteAdapterInsert
   const string  &filesDbName,
   const string  &identsDbName,
   const string  &locsDbName
-) : SqliteAdapter()
+) noexcept: SqliteAdapter()
 {
   openDatabases(filesDbName,identsDbName,locsDbName,false);
 
@@ -70,7 +70,7 @@ uint32_t
 SqliteAdapterInsert::storeFile
 (
   const string &file
-)
+) noexcept
 {
   sqlite3_bind_text(_fileStmt,2,file.c_str(),-1,SQLITE_STATIC);
   sqlite3_step(_fileStmt);
@@ -84,7 +84,7 @@ SqliteAdapterInsert::storeIdentifier
 (
   const string    &name,
   const uint32_t  &key
-)
+) noexcept
 {
   sqlite3_bind_int(_idStmt,1,key);
   sqlite3_bind_text(_idStmt,2,name.c_str(),-1,SQLITE_STATIC);
@@ -96,7 +96,7 @@ void
 SqliteAdapterInsert::storeLocation
 (
   const Location  &l
-)
+) noexcept
 {
   sqlite3_bind_int(_locStmt,1,l.fk_id);
   sqlite3_bind_int(_locStmt,2,l.fk_file);
@@ -106,7 +106,7 @@ SqliteAdapterInsert::storeLocation
 }
 
 void
-SqliteAdapterInsert::indexLocations()
+SqliteAdapterInsert::indexLocations() noexcept
 {
   sqlite3_exec(_locsDb,"CREATE INDEX fk_id_sort ON Locations(fk_id);",0,0,0);
 }
@@ -115,7 +115,7 @@ void
 SqliteAdapterInsert::startBulk
 (
   const uint8_t    baseID
-)
+) noexcept
 {
   sqlite3_exec(getDataBase(baseID),"BEGIN TRANSACTION",0,0,0);
 }
@@ -124,7 +124,7 @@ void
 SqliteAdapterInsert::endBulk
 (
   const uint8_t    baseID
-)
+) noexcept
 {
   sqlite3_exec(getDataBase(baseID),"END TRANSACTION",0,0,0);
 }

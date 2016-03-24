@@ -7,20 +7,20 @@ using namespace std;
 class FileList
 {
 public:
-  FileList();
+  FileList() noexcept;
 
   FileList
   (
     string  &file
-  );
+  ) noexcept;
 
   void setFile
   (
     string  &file
-  );
+  ) noexcept;
 
   string
-  getNextFile();
+  getNextFile() noexcept;
 private:
   string    _fileName;
   fstream   _fs;
