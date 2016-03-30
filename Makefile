@@ -1,9 +1,11 @@
 ifdef CLANG
   CC=clang
   CPP=clang++
+  AR=llvm-ar
 else
   CC=gcc
   CPP=g++
+  AR=ar
 endif
 
 SRC=src
@@ -25,20 +27,24 @@ vpath %.cpp $(SRC)
 vpath %.h %(INC)
 
 IDX=idx
+IDX_L=libGrokIdx.a
 EXE_IDX=$(BLD)/$(IDX)
+IDX_LIB=$(BLD)/$(IDX_L)
 SRCH=srch
+SRCH_L=libGrokSrch.a
 EXE_SRCH=$(BLD)/$(SRCH)
+SRCH_LIB=$(BLD)/$(SRCH_L)
 
 BLD=out
 
-IOBJS=idx.o \
+IOBJS=\
      FileProcessor.o \
      utils.o \
      FileList.o \
      SqliteAdapter.o \
      SqliteAdapterInsert.o
 
-SOBJS=srch.o \
+SOBJS=\
     SqliteAdapter.o \
     SqliteAdapterQuery.o
 
@@ -46,7 +52,7 @@ IDX_OBJS=$(addprefix $(BLD)/,$(IOBJS))
 SRCH_OBJS=$(addprefix $(BLD)/,$(SOBJS))
 
 test: all
-	./$(IDX) files.lst
+	./$(IDX) -l ../f.lst -j 3 && ./srch main
 
 clean:
 	-rm -rf $(BLD)
@@ -62,11 +68,17 @@ $(SRCH): $(BLD) $(EXE_SRCH)
 $(IDX): $(BLD) $(EXE_IDX)
 	-cp $(EXE_IDX) $(IDX)
 
-$(EXE_IDX): $(IDX_OBJS)
-	$(CPP) -o $(EXE_IDX) $^ -lpthread -lsqlite3
+$(EXE_IDX): $(EXE_IDX).o $(IDX_LIB)
+	$(CPP) -o $(EXE_IDX) $< -L./$(BLD) -lGrokIdx -lpthread -lsqlite3
 
-$(EXE_SRCH): $(SRCH_OBJS)
-	$(CPP) -o $(EXE_SRCH) $^ -lpthread -lsqlite3
+$(EXE_SRCH): $(EXE_SRCH).o $(SRCH_LIB)
+	$(CPP) -o $(EXE_SRCH) $< -L./$(BLD) -lGrokSrch -lpthread -lsqlite3
+
+$(IDX_LIB): $(IDX_OBJS)
+	$(AR) rcs $(IDX_LIB) $(IDX_OBJS)
+
+$(SRCH_LIB): $(SRCH_OBJS)
+	$(AR) rcs $(SRCH_LIB) $(SRCH_OBJS)
 
 $(BLD):
 	-mkdir $(BLD)

@@ -10,6 +10,11 @@ using namespace TCLAP;
 int main( int argc, char** argv )
 {
   try {
+    char* editor = getenv("EDITOR");
+    if( editor == nullptr ) {
+      editor = (char*)"vi";
+    }
+
     CmdLine cmd("", ' ', "0.1");
     UnlabeledValueArg<string> fName("name","FileName",true,"int","string");
 
@@ -27,7 +32,7 @@ int main( int argc, char** argv )
         tuple<string,uint16_t> tup = foundList->front();
         foundList->pop_front();
 
-        cout << "ca " << get<0>(tup) << " " << get<1>(tup) << endl;
+        cout << editor << " " << get<0>(tup) << " " << get<1>(tup) << endl;
       }
       delete foundList;
     } else {
