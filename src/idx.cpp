@@ -18,8 +18,8 @@ int main( int argc, char** argv )
 
     CmdLine cmd("", ' ', "0.1");
 
-    ValueArg<string> file_list_param("f","fileList","A list of files to be processed",true,"f.lst","string");
-    ValueArg<int> threadAmt_list_param("t","threads","How many threads to use (default is #of cpu threads)",false,-1,"integer");
+    ValueArg<string> file_list_param("l","fileList","A list of files to be processed",true,"f.lst","string");
+    ValueArg<int> threadAmt_list_param("j","threads","How many threads to use (default is #of cpu threads)",false,-1,"integer");
     SwitchArg massive_memory_param("m","massive_memory","set to use massive amounts of memory to speed up database creation",false);
     SwitchArg index_param("i","no_index_database","Speed database creation, slows searching",false);
 

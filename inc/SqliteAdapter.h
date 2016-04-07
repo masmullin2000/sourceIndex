@@ -15,9 +15,9 @@ public:
   static const uint8_t IBASE     = 1;
   static const uint8_t LBASE     = 2;
 
-  SqliteAdapter();
+  SqliteAdapter() noexcept;
 
-  virtual ~SqliteAdapter();
+  virtual ~SqliteAdapter() noexcept;
 protected:
   bool       _state;
   sqlite3   *_filesDb;
@@ -32,7 +32,7 @@ protected:
   getDataBase
   (
     const uint8_t   baseID
-  );
+  ) noexcept;
 
   void
   openDatabases
@@ -41,7 +41,7 @@ protected:
     const string   &identsDbName,
     const string   &locsDbName,
     const bool      readOnly
-  );
+  ) noexcept;
 private:
   void
   openDatabase
@@ -49,11 +49,11 @@ private:
     int               flags,
     const string     &dbname,
     sqlite3         **db
-  );
+  ) noexcept;
 
   void
   setPragmas
   (
     sqlite3   *db
-  );
+  ) noexcept;
 };

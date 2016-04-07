@@ -45,8 +45,8 @@ static mutex inMutex;
 class FileProcessor
 {
 public:
-  FileProcessor();
-  ~FileProcessor();
+  FileProcessor() noexcept;
+  ~FileProcessor() noexcept;
 
   FileProcessorErrors
   run
@@ -55,7 +55,7 @@ public:
     uint8_t                           threads,
     bool                              mm = false,
     bool                              idx = true
-  );
+  ) noexcept;
 private:
   FileProcessorErrors
   processFile
@@ -64,19 +64,19 @@ private:
     unordered_map<string,uint32_t>   &ids,
     forward_list<Location>           &locs,
     uint32_t                         &id_key
-  );
+  ) noexcept;
 
   FileProcessorErrors
   storeIdentifiers
   (
     unordered_map<string,uint32_t>  &ids
-  );
+  ) noexcept;
 
   FileProcessorErrors
   storeLocations
   (
     forward_list<Location>           &locs
-  );
+  ) noexcept;
 
   SqliteAdapterInsert               *sql;
   bool                               massive_memory;
