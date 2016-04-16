@@ -18,14 +18,14 @@ class Location
 public:
   uint32_t fk_id;
   uint32_t fk_file;
-  uint16_t line;
+  uint32_t line;
 };
 
 class Token
 {
 public:
   string    word;
-  uint16_t  line;
+  uint32_t  line;
 };
 
 enum class FileProcessorErrors

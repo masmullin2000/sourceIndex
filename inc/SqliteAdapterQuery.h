@@ -17,10 +17,20 @@ public:
     const string  &identsDbName,
     const string  &locsDbName
   );
+  
+  ~SqliteAdapterQuery();
 
-  forward_list<tuple<string,uint16_t>>*
-  find
+  forward_list<tuple<string,uint32_t>>*
+  findId
   (
     const string  &name
   );
+
+  forward_list<string>*
+  findFile
+  (
+    const string  &name
+  );
+private:
+  sqlite3_stmt  *_fLook;
 };

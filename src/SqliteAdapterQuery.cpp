@@ -1,5 +1,9 @@
 #include "SqliteAdapterQuery.h"
 
+#include <sstream>
+
+using namespace std;
+
 SqliteAdapterQuery::SqliteAdapterQuery
 (
   const string  &filesDbName,
@@ -8,6 +12,8 @@ SqliteAdapterQuery::SqliteAdapterQuery
 ) : SqliteAdapter()
 {
   openDatabases(filesDbName,identsDbName,locsDbName,true);
+  
+  _idStmt = _locStmt = _fileStmt = _fLook = nullptr;
 
   if( (SQLITE_OK != sqlite3_prepare( _identsDb,"SELECT * FROM Identifiers where name GLOB ?",-1,&_idStmt,0)) ||
       (SQLITE_OK != sqlite3_prepare( _locsDb,"SELECT * FROM Locations where fk_id == ?",-1,&_locStmt,0)) ||
@@ -15,17 +21,29 @@ SqliteAdapterQuery::SqliteAdapterQuery
     _state = false;
     return;
   }
+  
+  if( SQLITE_OK != sqlite3_prepare( _filesDb,"SELECT name FROM Files where name GLOB ?",-1,&_fLook,0) ) {
+    _state = false;
+  }
 }
 
-forward_list<tuple<string,uint16_t>>*
-SqliteAdapterQuery::find
+SqliteAdapterQuery::~SqliteAdapterQuery()
+{
+  sqlite3_finalize(_fLook);
+}
+
+
+forward_list<tuple<string,uint32_t>>*
+SqliteAdapterQuery::findId
 (
   const string  &name
 )
 {
+  if( !_state ) return nullptr;
+
   sqlite3_bind_text(_idStmt,1,name.c_str(),-1,SQLITE_STATIC);
   uint32_t fk_id = -1;
-  forward_list<tuple<string,uint16_t>> *rc = new forward_list<tuple<string,uint16_t>>();
+  forward_list<tuple<string,uint32_t>> *rc = new forward_list<tuple<string,uint32_t>>();
 
   while( SQLITE_ROW == sqlite3_step(_idStmt) ) {
     fk_id = sqlite3_column_int(_idStmt,0);
@@ -39,7 +57,7 @@ SqliteAdapterQuery::find
       char* fName;
       if( SQLITE_ROW == sqlite3_step(_fileStmt) ) {
         fName = (char*)sqlite3_column_text(_fileStmt,1);
-        tuple<string,uint16_t> tup((const char*)fName,line);
+        tuple<string,uint32_t> tup((const char*)fName,line);
         rc->push_front(tup);
       }
       sqlite3_reset(_fileStmt);
@@ -49,5 +67,32 @@ SqliteAdapterQuery::find
   
   sqlite3_reset(_idStmt);
 
+  return rc;
+}
+
+forward_list<string>*
+SqliteAdapterQuery::findFile
+(
+  const string    &name
+)
+{
+  if( !_state ) return nullptr;
+  stringstream ss;
+  
+  ss << name;
+  
+  const char *q = ss.str().c_str();
+
+  sqlite3_bind_text(_fLook,1,q,-1,SQLITE_STATIC);
+  
+  forward_list<string>* rc = new forward_list<string>();
+  
+  char* fName;
+  while( SQLITE_ROW == sqlite3_step(_fLook) ) {
+    fName = (char*)sqlite3_column_text(_fLook,0);
+    rc->push_front(fName);
+  }
+  sqlite3_reset(_fLook);
+  
   return rc;
 }
