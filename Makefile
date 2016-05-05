@@ -8,9 +8,13 @@ else
   AR=ar
 endif
 
+INSTALL_DIR=/usr/bin
 SRC=src
 INC=inc $(SRC) ../include/
 INCS=$(addprefix -I,$(INC))
+
+LIB_PATH=-L./$(BLD) -L../sql/.libs
+LIBRARY_PATH=../sql/.libs
 
 ifdef DBG
   OPT_OR_DBG=-g
@@ -58,9 +62,13 @@ clean:
 	-rm -rf $(BLD)
 	-rm $(IDX)
 	-rm $(SRCH)
-	-rm *.db*
+	#-rm *.db*
 
 all: $(IDX) $(SRCH)
+
+install: all
+	-cp $(IDX) $(INSTALL_DIR)
+	-cp $(SRCH) $(INSTALL_DIR)
 
 $(SRCH): $(BLD) $(EXE_SRCH)
 	-cp $(EXE_SRCH) $(SRCH)
@@ -69,10 +77,10 @@ $(IDX): $(BLD) $(EXE_IDX)
 	-cp $(EXE_IDX) $(IDX)
 
 $(EXE_IDX): $(EXE_IDX).o $(IDX_LIB)
-	$(CPP) -o $(EXE_IDX) $< -L./$(BLD) -lGrokIdx -lpthread -lsqlite3
+	$(CPP) -o $(EXE_IDX) $< $(LIB_PATH) -lGrokIdx -lpthread -lsqlite3
 
 $(EXE_SRCH): $(EXE_SRCH).o $(SRCH_LIB)
-	$(CPP) -o $(EXE_SRCH) $< -L./$(BLD) -lGrokSrch -lpthread -lsqlite3
+	$(CPP) -o $(EXE_SRCH) $< $(LIB_PATH) -lGrokSrch -lpthread ../sql/.libs/libsqlite3.so
 
 $(IDX_LIB): $(IDX_OBJS)
 	$(AR) rcs $(IDX_LIB) $(IDX_OBJS)

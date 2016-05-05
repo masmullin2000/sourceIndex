@@ -1,6 +1,7 @@
 #include "SqliteAdapterQuery.h"
 
 #include <sstream>
+#include <iostream>
 
 using namespace std;
 
@@ -32,6 +33,41 @@ SqliteAdapterQuery::~SqliteAdapterQuery()
   sqlite3_finalize(_fLook);
 }
 
+void
+SqliteAdapterQuery::findId
+(
+  const string              &name,
+  function<void(string&,uint32_t&)>  cb
+)
+{
+  if( !_state ) return;
+
+  sqlite3_bind_text(_idStmt,1,name.c_str(),-1,SQLITE_STATIC);
+  uint32_t fk_id = -1;
+
+  while( SQLITE_ROW == sqlite3_step(_idStmt) ) {
+    fk_id = sqlite3_column_int(_idStmt,0);
+    string idName = (char*)sqlite3_column_text(_idStmt,1);
+
+    sqlite3_bind_int(_locStmt,1,fk_id);
+    while( SQLITE_ROW == sqlite3_step(_locStmt) ) {
+      cout << idName;
+      int pk = sqlite3_column_int(_locStmt,1);
+      uint32_t line = sqlite3_column_int(_locStmt,2);
+
+      sqlite3_bind_int(_fileStmt,1,pk);
+      
+      if( SQLITE_ROW == sqlite3_step(_fileStmt) ) {
+        string fName = (char*)sqlite3_column_text(_fileStmt,1);
+        
+        cb(fName,line);
+      }
+      sqlite3_reset(_fileStmt);
+    }
+    sqlite3_reset(_locStmt);
+  }
+  sqlite3_reset(_idStmt);
+}
 
 forward_list<tuple<string,uint32_t>>*
 SqliteAdapterQuery::findId
@@ -64,7 +100,7 @@ SqliteAdapterQuery::findId
     }
     sqlite3_reset(_locStmt);
   }
-  
+
   sqlite3_reset(_idStmt);
 
   return rc;
@@ -79,7 +115,7 @@ SqliteAdapterQuery::findFile
   if( !_state ) return nullptr;
   stringstream ss;
   
-  ss << name;
+  ss << "*" << name;
   
   const char *q = ss.str().c_str();
 

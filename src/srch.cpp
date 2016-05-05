@@ -7,10 +7,17 @@
 using namespace std;
 using namespace TCLAP;
 
+class cb : public identifierCallback {
+public:
+  virtual void operator()(string file, uint32_t line) const {
+    cout << file << line << endl;
+  }
+};
+
 int main( int argc, char** argv )
 {
   try {
-    char* editor = getenv("EDITOR");
+    char* editor = getenv("C_EDITOR");
     if( editor == nullptr ) {
       editor = (char*)"vi";
     }
@@ -35,11 +42,12 @@ int main( int argc, char** argv )
         while( !foundList->empty() ) {
           string s = foundList->front();
           foundList->pop_front();
-          
+
           cout << editor << " " << s << endl;
         }
       }
     } else {
+#if 1
       forward_list<tuple<string,uint32_t>>* foundList = saq.findId(findName);
       if( foundList != nullptr ) {
         while( !foundList->empty() ) {
@@ -52,6 +60,13 @@ int main( int argc, char** argv )
       } else {
         cout << findName << ": Could not be found" << endl;
       }
+#else
+      //cb cBack;
+      auto cBack = [editor](string file, uint32_t line) {
+        cout << editor << " " << file << " " << line << endl;
+      };
+      saq.findId(findName, cBack);
+#endif
     }
   } catch (ArgException &e) {
     cerr << "error" << endl;
