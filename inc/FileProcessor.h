@@ -11,6 +11,8 @@
 
 #include <sqlite3.h>
 
+#include <iostream>
+
 using namespace std;
 
 class Location
@@ -29,7 +31,7 @@ public:
   {
     fk_id       = id;
     fk_file     = file;
-    line        = line;
+    line        = l;
   }
 };
 

@@ -91,7 +91,8 @@ SqliteAdapterInsert::storeIdentifier
   sqlite3_step(_idStmt);
   sqlite3_reset(_idStmt);
 }
-
+#include <iostream>
+using namespace std;
 void
 SqliteAdapterInsert::storeLocation
 (

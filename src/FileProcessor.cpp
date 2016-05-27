@@ -1,22 +1,16 @@
 #include "FileProcessor.h"
 #include "FileList.h"
-#include "utils.h"
 #include "i_si.h"
 #include "ThreadPool.hpp"
+#include "FileParser.h"
 
 #include <iostream>
 #include <cstring>
-
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
+#include <memory>
 #include <sqlite3.h>
 
 using namespace std;
 using namespace concurrent;
-
-#define MAX_WORD_SZ 128
 
 FileProcessor::FileProcessor() noexcept
 {
@@ -84,59 +78,18 @@ FileProcessor::processFile
   uint32_t                         &id_key
 ) noexcept
 {
-  if( fName.length() < 1 )
-    return FileProcessorErrors::FILE_NOT_FOUND;
-
-  int fd = open(fName.c_str(), O_RDONLY);
-  if( fd == -1 )
-    return FileProcessorErrors::FILE_NOT_FOUND;
-
-  struct stat sb;
-  if( fstat(fd,&sb) == -1 )
-    return FileProcessorErrors::FILE_NO_STATUS;
-
-  if( !S_ISREG(sb.st_mode) )
-    return FileProcessorErrors::FILE_NOT_FOUND;
-
-  char* file = (char*)mmap(0,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0);
-  if( file == MAP_FAILED )
-    return FileProcessorErrors::FILE_MMAP_ERROR;
-
-  close(fd);
-
   unique_lock<mutex> lk(fileMutex);
   uint32_t pk = sql->storeFile(fName);
   lk.unlock();
 
-  char word[MAX_WORD_SZ];
-  word[0] = '\0';
-  int j = 0;
-  int line = 1;
-  forward_list<Token> toks;
-
-#define c file[i]
-  for( int i = 0; i < sb.st_size; i++ ) {
-    if( (IsIdentifierNonDigit(c) || IsDigit(c)) && j < MAX_WORD_SZ-1 ) {
-      word[j++] = c;
-    } else {
-      word[j] = '\0';
-      j = 0;
-      if( word[0] != '\0' && !IsDigit(word[0]) ) {
-        Token t;
-        t.word = string(word);
-        t.line = line;
-        toks.emplace_front(t);
-      }
-      if( c == '\n' ) line++;
-    }
-  }
-#undef c
-  munmap(file,sb.st_size);
+  auto parser = Make_Parser(fName);
+  auto toks = parser->parse();
 
   lock_guard<mutex> loopLk(inMutex);
-  while( !toks.empty() ) {
-    Token t = toks.front();
-    toks.pop_front();
+
+  while( toks != nullptr && !toks->empty() ) {
+    Token t = toks->front();
+    toks->pop_front();
 
     auto f = ids.find(t.word);
 

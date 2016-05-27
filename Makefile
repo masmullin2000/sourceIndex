@@ -9,12 +9,25 @@ else
 endif
 
 INSTALL_DIR=/usr/bin
-SRC=src
-INC=inc $(SRC) ../include/
+SRC=src                           \
+    src/parsers
+
+INC=inc                           \
+  $(SRC)                          \
+  ../include/                     \
+  /usr/lib/$(LLVM)/include        \
+  inc/parsers
+
 INCS=$(addprefix -I,$(INC))
 
-LIB_PATH=-L./$(BLD) -L../sql/.libs
-LIBRARY_PATH=../sql/.libs
+#LIB_PATH=-L./$(BLD) -L../sql/.libs
+LLVM=llvm-3.6
+LIBRARY_PATH=                     \
+  ./$(BLD)                        \
+  ../sql/.libs                    \
+  /usr/lib/$(LLVM)/lib
+
+LIB_PATH=$(addprefix -L,$(LIBRARY_PATH))
 
 ifdef DBG
   OPT_OR_DBG=-g
@@ -42,11 +55,12 @@ SRCH_LIB=$(BLD)/$(SRCH_L)
 BLD=out
 
 IOBJS=\
-     FileProcessor.o \
-     utils.o \
-     FileList.o \
-     SqliteAdapter.o \
-     SqliteAdapterInsert.o
+     FileProcessor.o            \
+     utils.o                    \
+     FileList.o                 \
+     SqliteAdapter.o            \
+     SqliteAdapterInsert.o      \
+     FileParser.o
 
 SOBJS=\
     SqliteAdapter.o \
@@ -77,7 +91,7 @@ $(IDX): $(BLD) $(EXE_IDX)
 	-cp $(EXE_IDX) $(IDX)
 
 $(EXE_IDX): $(EXE_IDX).o $(IDX_LIB)
-	$(CPP) -o $(EXE_IDX) $< $(LIB_PATH) -lGrokIdx -lpthread -lsqlite3
+	$(CPP) -o $(EXE_IDX) $< $(LIB_PATH) -lGrokIdx -lpthread -lsqlite3 -lclang -lboost_filesystem -lboost_system
 
 $(EXE_SRCH): $(EXE_SRCH).o $(SRCH_LIB)
 	$(CPP) -o $(EXE_SRCH) $< $(LIB_PATH) -lGrokSrch -lpthread -lsqlite3
