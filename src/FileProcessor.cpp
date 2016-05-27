@@ -21,7 +21,6 @@ using namespace concurrent;
 FileProcessor::FileProcessor() noexcept
 {
   sql = new SqliteAdapterInsert(FILE_DATABASE,IDENT_DATABASE,LOCS_DATABASE);
-  massive_memory = false;
 }
 
 FileProcessor::~FileProcessor() noexcept
@@ -34,11 +33,9 @@ FileProcessor::run
 (
   string                           &fList,
   uint8_t                           threads,
-  bool                              mm,
   bool                              idx
 ) noexcept
 {
-  massive_memory = mm;
   ThreadPool tp(threads);
 
   FileList fl;
@@ -49,7 +46,6 @@ FileProcessor::run
   uint32_t                        id_key = -1;
 
   sql->startBulk(SqliteAdapter::FBASE);
-  sql->startBulk(SqliteAdapter::IBASE);
   sql->startBulk(SqliteAdapter::LBASE);
   string file = fl.getNextFile();
   while( file.length() > 0 ) {
@@ -62,22 +58,14 @@ FileProcessor::run
   }
   tp.WaitAll();
   sql->endBulk(SqliteAdapter::LBASE);
-  sql->endBulk(SqliteAdapter::IBASE);
   sql->endBulk(SqliteAdapter::FBASE);
 
   tp.AddJob( [this,&ids]() noexcept {
       storeIdentifiers(ids);
   });
-  tp.AddJob( [this,&locs,idx]() noexcept {
-    if( massive_memory ) {
-      storeLocations(locs);
-      if( idx ) {
-        sql->indexLocations();
-      }
-    } else if( idx ) {
-      sql->indexLocations();
-    }
-  }); 
+  if( idx ) {
+    sql->indexLocations();
+  }
 
   tp.JoinAll();
 
@@ -160,15 +148,8 @@ FileProcessor::processFile
       fk_id = f->second;
     }
 
-    Location l;
-    l.fk_id = fk_id;
-    l.fk_file = pk;
-    l.line = t.line;
-
-    if( massive_memory )
-      locs.emplace_front(l);
-    else
-      sql->storeLocation(l);
+    Location l(fk_id,pk,t.line);
+    sql->storeLocation(l);
   }
   return FileProcessorErrors::SUCCESS;
 }

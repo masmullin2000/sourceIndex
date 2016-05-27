@@ -62,7 +62,7 @@ clean:
 	-rm -rf $(BLD)
 	-rm $(IDX)
 	-rm $(SRCH)
-	#-rm *.db*
+	-rm *.db*
 
 all: $(IDX) $(SRCH)
 
@@ -80,7 +80,7 @@ $(EXE_IDX): $(EXE_IDX).o $(IDX_LIB)
 	$(CPP) -o $(EXE_IDX) $< $(LIB_PATH) -lGrokIdx -lpthread -lsqlite3
 
 $(EXE_SRCH): $(EXE_SRCH).o $(SRCH_LIB)
-	$(CPP) -o $(EXE_SRCH) $< $(LIB_PATH) -lGrokSrch -lpthread ../sql/.libs/libsqlite3.so
+	$(CPP) -o $(EXE_SRCH) $< $(LIB_PATH) -lGrokSrch -lpthread -lsqlite3
 
 $(IDX_LIB): $(IDX_OBJS)
 	$(AR) rcs $(IDX_LIB) $(IDX_OBJS)

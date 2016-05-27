@@ -47,26 +47,10 @@ int main( int argc, char** argv )
         }
       }
     } else {
-#if 1
-      forward_list<tuple<string,uint32_t>>* foundList = saq.findId(findName);
-      if( foundList != nullptr ) {
-        while( !foundList->empty() ) {
-          tuple<string,uint32_t> tup = foundList->front();
-          foundList->pop_front();
-
-          cout << editor << " " << get<0>(tup) << " " << get<1>(tup) << endl;
-        }
-        delete foundList;
-      } else {
-        cout << findName << ": Could not be found" << endl;
-      }
-#else
-      //cb cBack;
       auto cBack = [editor](string file, uint32_t line) {
         cout << editor << " " << file << " " << line << endl;
       };
       saq.findId(findName, cBack);
-#endif
     }
   } catch (ArgException &e) {
     cerr << "error" << endl;

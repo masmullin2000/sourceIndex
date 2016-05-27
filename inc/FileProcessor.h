@@ -16,9 +16,21 @@ using namespace std;
 class Location
 {
 public:
-  uint32_t fk_id;
-  uint32_t fk_file;
-  uint32_t line;
+  uint32_t      fk_id;
+  uint32_t      fk_file;
+  uint32_t      line;
+  
+  Location
+  (
+    uint32_t    id,
+    uint32_t    file,
+    uint32_t    l
+  )
+  {
+    fk_id       = id;
+    fk_file     = file;
+    line        = line;
+  }
 };
 
 class Token
@@ -53,7 +65,6 @@ public:
   (
     string                           &fList,
     uint8_t                           threads,
-    bool                              mm = false,
     bool                              idx = true
   ) noexcept;
 private:
@@ -79,5 +90,4 @@ private:
   ) noexcept;
 
   SqliteAdapterInsert               *sql;
-  bool                               massive_memory;
 };

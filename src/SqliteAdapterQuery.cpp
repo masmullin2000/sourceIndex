@@ -51,7 +51,6 @@ SqliteAdapterQuery::findId
 
     sqlite3_bind_int(_locStmt,1,fk_id);
     while( SQLITE_ROW == sqlite3_step(_locStmt) ) {
-      cout << idName;
       int pk = sqlite3_column_int(_locStmt,1);
       uint32_t line = sqlite3_column_int(_locStmt,2);
 
@@ -115,7 +114,7 @@ SqliteAdapterQuery::findFile
   if( !_state ) return nullptr;
   stringstream ss;
   
-  ss << "*" << name;
+  ss << name;
   
   const char *q = ss.str().c_str();
 
