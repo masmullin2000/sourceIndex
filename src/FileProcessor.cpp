@@ -3,6 +3,7 @@
 #include "i_si.h"
 #include "ThreadPool.hpp"
 #include "FileParser.h"
+#include "CParser.h"
 
 #include <iostream>
 #include <cstring>

@@ -60,7 +60,8 @@ IOBJS=\
      FileList.o                 \
      SqliteAdapter.o            \
      SqliteAdapterInsert.o      \
-     FileParser.o
+     FileParser.o               \
+     CParser.o
 
 SOBJS=\
     SqliteAdapter.o \

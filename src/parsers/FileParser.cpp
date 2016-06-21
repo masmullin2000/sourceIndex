@@ -5,12 +5,10 @@
 #include <sys/mman.h>
 #include "utils.h"
 
-
 #include "boost/filesystem.hpp"
 
 #include "FileParser.h"
-
-#define MAX_WORD_SZ 128
+#include "CParser.h"
 
 using namespace std;
 namespace fs = boost::filesystem;
@@ -24,21 +22,57 @@ Make_Parser
   shared_ptr<FileParser>  rc;
   fs::path file(fileName);
 
-  if( file.extension().compare(".h") == 0 ) {
-    rc = make_shared<FileParser>(fileName);
+  if( (file.extension().compare(".c") == 0)     ||
+      (file.extension().compare(".cc") == 0)     ||
+      (file.extension().compare(".h") == 0)     ||
+      (file.extension().compare(".cpp") == 0)   ||
+      (file.extension().compare(".cxx") == 0)   ||
+      (file.extension().compare(".hpp") == 0)) {
+    rc = make_shared<CParser>(fileName);
+  } else if( (file.extension().compare(".java") == 0) ) {
+    rc = make_shared<JavaParser>(fileName);
   } else {
     rc = make_shared<FileParser>(fileName);
   }
   
   return rc;
 }
-  
-FileParser::FileParser
+
+bool
+FileParser::getFileContents
 (
-  const string& fileName
-) : _fName(fileName)
+  char**      fileContents,
+  uint64_t*   sz
+)
 {
-  ;
+  *fileContents = nullptr;
+  *sz = 0;
+
+  int fd = open(_fName.c_str(), O_RDONLY);
+  if( fd == -1 ) {
+    return false;
+  }
+
+  struct stat sb;
+  if( fstat(fd,&sb) == -1 ) {
+    close(fd);
+    return false;
+  }
+  *sz = sb.st_size;
+
+  if( !S_ISREG(sb.st_mode) ) {
+    close(fd);
+    return false;
+  }
+
+  *fileContents = (char*)mmap(0,*sz,PROT_READ,MAP_PRIVATE,fd,0);
+  if( fileContents == MAP_FAILED ) {
+    close(fd);
+    return false;
+  }
+
+  close(fd);
+  return true;
 }
 
 shared_ptr<forward_list<Token>>
@@ -49,31 +83,10 @@ FileParser::parse()
   if( _fName.length() < 1 ) {
     return toks;
   }
+  char* file = nullptr;
+  uint64_t sz = 0;
+  getFileContents( &file, &sz );
 
-  int fd = open(_fName.c_str(), O_RDONLY);
-  if( fd == -1 ) {
-    close(fd);
-    return toks;
-  }
-
-  struct stat sb;
-  if( fstat(fd,&sb) == -1 ) {
-    close(fd);
-    return toks;
-  }
-
-  if( !S_ISREG(sb.st_mode) ) {
-    close(fd);
-    return toks;
-  }
-
-  char* file = (char*)mmap(0,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0);
-  if( file == MAP_FAILED ) {
-    close(fd);
-    return toks;
-  }
-
-  close(fd);
   toks = make_shared<forward_list<Token>>();
 
   char word[MAX_WORD_SZ];
@@ -81,7 +94,7 @@ FileParser::parse()
   int j = 0;
   int line = 1;
 #define c file[i]
-  for( int i = 0; i < sb.st_size; i++ ) {
+  for( uint64_t i = 0; i < sz; i++ ) {
     if( (IsIdentifierNonDigit(c) || IsDigit(c)) && j < MAX_WORD_SZ-1 ) {
       word[j++] = c;
     } else {
@@ -97,7 +110,7 @@ FileParser::parse()
     }
   }
 #undef c
-  munmap(file,sb.st_size);
+  munmap(file,sz);
 
   return toks;
 }
