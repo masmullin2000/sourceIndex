@@ -16,16 +16,13 @@ INC=inc                           \
   $(SRC)                          \
   ../include/                     \
   /usr/lib/$(LLVM)/include        \
-  inc/parsers
+  inc/parsers \
+  ./tclap/include/
 
 INCS=$(addprefix -I,$(INC))
 
-#LIB_PATH=-L./$(BLD) -L../sql/.libs
-LLVM=llvm-3.6
 LIBRARY_PATH=                     \
   ./$(BLD)                        \
-  ../sql/.libs                    \
-  /usr/lib/$(LLVM)/lib
 
 LIB_PATH=$(addprefix -L,$(LIBRARY_PATH))
 
@@ -92,7 +89,7 @@ $(IDX): $(BLD) $(EXE_IDX)
 	-cp $(EXE_IDX) $(IDX)
 
 $(EXE_IDX): $(EXE_IDX).o $(IDX_LIB)
-	$(CPP) -o $(EXE_IDX) $< $(LIB_PATH) -lGrokIdx -lpthread -lsqlite3 -lclang -lboost_filesystem -lboost_system
+	$(CPP) -o $(EXE_IDX) $< $(LIB_PATH) -lGrokIdx -lpthread -lsqlite3 -lboost_filesystem -lboost_system
 
 $(EXE_SRCH): $(EXE_SRCH).o $(SRCH_LIB)
 	$(CPP) -o $(EXE_SRCH) $< $(LIB_PATH) -lGrokSrch -lpthread -lsqlite3
