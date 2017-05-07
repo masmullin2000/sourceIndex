@@ -80,7 +80,7 @@ FileParser::parse()
 {
   shared_ptr<forward_list<Token>> toks = nullptr;
   
-  if( _fName.length() < 1 ) {
+  if( _fName.length() < 1 | _fName == "." ) {
     return toks;
   }
   char* file = nullptr;
@@ -95,6 +95,7 @@ FileParser::parse()
   int line = 1;
 #define c file[i]
   for( uint64_t i = 0; i < sz; i++ ) {
+    if( file != nullptr ) {
     if( (IsIdentifierNonDigit(c) || IsDigit(c)) && j < MAX_WORD_SZ-1 ) {
       word[j++] = c;
     } else {
@@ -107,7 +108,7 @@ FileParser::parse()
         toks->emplace_front(t);
       }
       if( c == '\n' ) line++;
-    }
+    }}
   }
 #undef c
   munmap(file,sz);
